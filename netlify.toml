@@ -1,0 +1,12 @@
+[build]
+  # Fix for the Nov 1, 2026 Netlify failures:
+  # Netlify reported "Deploy directory 'public' does not exist"
+  # because the repository at that time contained only index.html
+  # at the repo root and no public/ folder at all.
+  # This package fixes that by placing the site in public/
+  # and pointing Netlify at that exact folder.
+  publish = "public"
+  functions = "netlify/functions"
+
+[build.environment]
+  NODE_VERSION = "20"
