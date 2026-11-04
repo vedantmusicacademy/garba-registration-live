@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Navratri Dhamaka — Garba Registration (Test)</title>
+<style>
+  body{font-family:system-ui,Arial,sans-serif;background:#1c1210;color:#f5e9d3;margin:0}
+  .strip{background:#1f7a4d;color:#fff;text-align:center;padding:10px;font-weight:700}
+  header{text-align:center;padding:28px 16px 8px}
+  header h2{margin:0;font-size:20px;letter-spacing:1px}
+  header h1{margin:8px 0;font-size:42px}
+  .pills{text-align:center;padding:8px 16px 20px}
+  .pill{display:inline-block;border:1px solid #d9a441;border-radius:999px;padding:6px 12px;margin:4px}
+  main{max-width:980px;margin:0 auto;padding:0 16px 40px;display:grid;grid-template-columns:1fr 320px;gap:20px}
+  .box{background:#2b1d18;border:1px solid #6b4a2f;border-radius:12px;padding:18px;margin-bottom:18px}
+  .box h2{text-align:center;margin-top:0}
+  label{display:block;margin:12px 0 4px;font-weight:600}
+  input,select{width:100%;padding:10px;border-radius:8px;border:1px solid #8a6a4a;background:#fff;color:#111;box-sizing:border-box}
+  .req{color:#ff6b6b}
+  .stepper{display:flex;gap:8px;align-items:center}
+  .stepper button{width:40px;height:40px;font-size:20px;border-radius:8px;border:0;background:#d9a441;cursor:pointer}
+  .stepper output{font-size:18px;min-width:32px;text-align:center}
+  .seg button{padding:10px 16px;border-radius:8px;border:1px solid #d9a441;background:transparent;color:#f5e9d3;cursor:pointer;margin-right:8px}
+  .seg button.on{background:#d9a441;color:#111}
+  button.pay{width:100%;padding:14px;font-size:17px;font-weight:700;border:0;border-radius:10px;background:#d9a441;cursor:pointer}
+  button.pay:disabled{opacity:.6}
+  .order{background:#2b1d18;border:1px solid #6b4a2f;border-radius:12px;padding:18px;height:fit-content}
+  .row{display:flex;justify-content:space-between;margin:8px 0}
+  .note{font-size:14px;color:#e8cfa0}
+  #confirmation{display:none}
+  footer{text-align:center;padding:20px;color:#e8cfa0}
+  a{color:#ffd27a}
+  @media(max-width:700px){main{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="strip">TEST MODE — No money is charged. This is a test registration only.</div>
+<header>
+  <h2>RADHE KRISHNA SANGEET<br>&amp;<br>VEDANT MUSIC ACADEMY PRESENT</h2>
+  <h1>Navratri Dhamaka</h1>
+  <p>An evening of Garba and dandiya.</p>
+</header>
+<div class="pills">
+  <span class="pill">Friday, October 15, 2027</span>
+  <span class="pill">7:00 PM – 11:00 PM</span>
+  <span class="pill">Bartlett Park District, 700 S Bartlett Rd, Bartlett, IL 60103</span>
+  <a class="pill" href="https://share.google/YKFk7R0pjMEO3x2Gk" target="_blank" rel="noopener">Get directions</a>
+</div>
+
+<main>
+<div>
+  <h2 style="text-align:center">Register for Garba Night</h2>
+  <p style="text-align:center">Fill in your details, choose your tickets, and pay by card. Your total updates as you go.</p>
+
+  <form id="regForm" novalidate>
+    <!-- Box 1 -->
+    <section class="box" aria-labelledby="h-details">
+      <h2 id="h-details">Your details</h2>
+      <p style="text-align:center">We use these to confirm your booking.</p>
+      <label for="fullName">Full Name <span class="req">*</span></label>
+      <input id="fullName" required autocomplete="name">
+      <label for="phone">Phone Number <span class="req">*</span></label>
+      <input id="phone" required inputmode="tel" autocomplete="tel">
+      <label for="email">Email <span class="req">*</span></label>
+      <input id="email" type="email" required autocomplete="email">
+    </section>
+
+    <!-- Box 2 -->
+    <section class="box" aria-labelledby="h-tickets">
+      <h2 id="h-tickets">Tickets</h2>
+      <label>Paid Tickets <span class="req">*</span></label>
+      <div class="stepper">
+        <button type="button" id="t-minus" aria-label="One fewer paid ticket">−</button>
+        <output id="t-count">1</output>
+        <button type="button" id="t-plus" aria-label="One more paid ticket">+</button>
+      </div>
+      <label>Children under 8 (free)</label>
+      <div class="stepper">
+        <button type="button" id="c-minus" aria-label="One fewer child">−</button>
+        <output id="c-count">0</output>
+        <button type="button" id="c-plus" aria-label="One more child">+</button>
+      </div>
+      <p class="note">Children under 8 are free — tell us how many are coming so we can plan the space.</p>
+      <p>Simple pricing for everyone. Buy 10 or more tickets together and every ticket drops to $8.</p>
+      <p>$10 per ticket · $8 per ticket for 10 or more tickets · Free for children under 8</p>
+    </section>
+
+    <!-- Box 3 -->
+    <section class="box" aria-labelledby="h-dandiya">
+      <h2 id="h-dandiya">Do you need dandiya sticks?</h2>
+      <div class="seg" role="group" aria-label="Do you need dandiya sticks">
+        <button type="button" id="d-yes" class="on">Yes</button>
+        <button type="button" id="d-no">No</button>
+      </div>
+      <div id="dandiya-fields">
+        <label>Dandiya pairs <span class="req">*</span></label>
+        <div class="stepper">
+          <button type="button" id="p-minus" aria-label="One fewer dandiya pair">−</button>
+          <output id="p-count">0</output>
+          <button type="button" id="p-plus" aria-label="One more dandiya pair">+</button>
+        </div>
+        <label for="colour">Choose Dandiya Color <span class="req" id="colour-star" hidden>*</span></label>
+        <select id="colour">
+          <option value="">Choose a colour</option>
+          <option>Red</option><option>Blue</option><option>Green</option><option>Yellow</option>
+          <option>Orange</option><option>Purple</option><option>Pink</option><option>White</option>
+          <option>Black</option><option>Multicolor</option>
+        </select>
+        <p class="note">$3 per pair. Colour is required only when pairs is 1 or more. With 0 pairs, no colour is needed and dandiya cost is $0.</p>
+      </div>
+    </section>
+
+    <!-- Box 4 -->
+    <section class="box" aria-labelledby="h-pay">
+      <h2 id="h-pay">Pay by Card</h2>
+      <p class="note">Test card preview only. Card details are never sent to the test-email function and no money is charged.</p>
+      <label for="cardName">Name on credit card <span class="req">*</span></label>
+      <input id="cardName" required autocomplete="cc-name">
+      <label for="cardNumber">Card Number <span class="req">*</span></label>
+      <input id="cardNumber" required inputmode="numeric" autocomplete="cc-number" placeholder="4242 4242 4242 4242 (test)">
+      <label for="expiry">Expiry <span class="req">*</span></label>
+      <input id="expiry" required placeholder="MM/YY">
+      <label for="cvc">CVC <span class="req">*</span></label>
+      <input id="cvc" required inputmode="numeric" placeholder="123">
+      <p id="formError" role="alert" style="color:#ff9a9a"></p>
+      <button type="submit" class="pay" id="payBtn">Pay $10.00 (Test)</button>
+    </section>
+  </form>
+
+  <section class="box" id="confirmation" aria-live="polite">
+    <h2>Test registration complete</h2>
+    <p>This was a test payment, so no money was charged. Here is what your booking looks like:</p>
+    <div class="row"><span>Booking reference</span><strong id="conf-ref"></strong></div>
+    <div class="row"><span>Name</span><strong id="conf-name"></strong></div>
+    <div class="row"><span>Paid tickets</span><strong id="conf-tickets"></strong></div>
+    <div class="row"><span>Children under 8 (free)</span><strong id="conf-children"></strong></div>
+    <div class="row"><span>Dandiya</span><strong id="conf-dandiya"></strong></div>
+    <div class="row"><span>Total paid (test)</span><strong id="conf-total"></strong></div>
+    <div class="row"><span>Event</span><strong>Fri, Oct 15, 2027 · 7:00–11:00 PM · Bartlett Park District, 700 S Bartlett Rd, Bartlett, IL 60103</strong></div>
+    <p id="emailStatus" class="note"></p>
+    <p><a href="https://share.google/YKFk7R0pjMEO3x2Gk" target="_blank" rel="noopener">Get directions</a></p>
+    <button type="button" class="pay" onclick="location.reload()">Register another guest</button>
+  </section>
+</div>
+
+<aside class="order" aria-labelledby="h-order">
+  <h2 id="h-order">Your order</h2>
+  <div class="row"><span>Tickets</span><span id="sum-tickets"></span></div>
+  <div class="row"><span>Children under 8</span><span id="sum-children"></span></div>
+  <div class="row" id="sum-dandiya-row"><span>Dandiya</span><span id="sum-dandiya"></span></div>
+  <div class="row"><strong>Total</strong><strong id="sum-total"></strong></div>
+  <p class="note">Total updates live. Server recomputes the same total before any test email is sent.</p>
+</aside>
+</main>
+
+<section style="max-width:980px;margin:0 auto;padding:0 16px 20px">
+  <h2 style="text-align:center">Venue &amp; directions</h2>
+  <p style="text-align:center">Tap the directions button to open the venue in Google Maps and get turn-by-turn directions.</p>
+  <p style="text-align:center">Address: 700 S Bartlett Rd, Bartlett, IL 60103<br>
+  <a href="https://share.google/YKFk7R0pjMEO3x2Gk" target="_blank" rel="noopener">Get directions</a> · Opens in Google Maps</p>
+</section>
+
+<footer>Presented by Radhe Krishna Sangeet &amp; Vedant Music Academy</footer>
+
+<script>
+(function(){
+  var tickets=1, children=0, dandiya=true, pairs=0;
+  function $(id){return document.getElementById(id);}
+  function money(n){return "$"+n.toFixed(2);}
+  function totals(){
+    var unit = tickets>=10 ? 8 : 10;
+    var t = tickets*unit;
+    var d = (dandiya && pairs>=1) ? pairs*3 : 0;
+    return {unit:unit, ticketCost:t, dandiyaCost:d, total:t+d};
+  }
+  function render(){
+    $("t-count").textContent=tickets; $("c-count").textContent=children; $("p-count").textContent=pairs;
+    $("dandiya-fields").style.display = dandiya ? "block" : "none";
+    $("d-yes").className = dandiya ? "on" : ""; $("d-no").className = dandiya ? "" : "on";
+    // Colour required only when pairs >= 1.
+    var colourRequired = dandiya && pairs>=1;
+    $("colour").required = colourRequired;
+    $("colour").setAttribute("aria-required", colourRequired ? "true" : "false");
+    $("colour-star").hidden = !colourRequired;
+    var t=totals();
+    $("sum-tickets").textContent = tickets+" × "+money(t.unit)+" = "+money(t.ticketCost);
+    $("sum-children").textContent = children;
+    $("sum-dandiya").textContent = (dandiya && pairs>=1) ? pairs+" pair"+(pairs===1?"":"s")+" · "+$("colour").value+" = "+money(t.dandiyaCost) : "$0.00";
+    $("sum-dandiya-row").style.display = (dandiya && pairs>=1) ? "flex" : "none";
+    $("sum-total").textContent = money(t.total);
+    $("payBtn").textContent = "Pay "+money(t.total)+" (Test)";
+  }
+  function step(get,set,delta,min,max){ var v=Math.max(min,Math.min(max,get()+delta)); set(v); render(); }
+  $("t-minus").onclick=function(){step(function(){return tickets;},function(v){tickets=v;},-1,1,100);};
+  $("t-plus").onclick=function(){step(function(){return tickets;},function(v){tickets=v;},1,1,100);};
+  $("c-minus").onclick=function(){step(function(){return children;},function(v){children=v;},-1,0,100);};
+  $("c-plus").onclick=function(){step(function(){return children;},function(v){children=v;},1,0,100);};
+  $("p-minus").onclick=function(){step(function(){return pairs;},function(v){pairs=v;},-1,0,100);};
+  $("p-plus").onclick=function(){step(function(){return pairs;},function(v){pairs=v;},1,0,100);};
+  $("d-yes").onclick=function(){dandiya=true; render();};
+  $("d-no").onclick=function(){dandiya=false; pairs=0; render();};
+  $("colour").onchange=render;
+  $("regForm").onsubmit=async function(e){
+    e.preventDefault(); $("formError").textContent="";
+    var name=$("fullName").value.trim(), phone=$("phone").value.trim(), email=$("email").value.trim();
+    if(!name || !phone || !email){ $("formError").textContent="Please fill in full name, phone and email."; return; }
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ $("formError").textContent="Please enter a valid email address."; return; }
+    if(!$("cardName").value.trim() || !$("cardNumber").value.trim() || !$("expiry").value.trim() || !$("cvc").value.trim()){
+      $("formError").textContent="Please fill in the test card fields."; return;
+    }
+    if(dandiya && pairs>=1 && !$("colour").value){ $("formError").textContent="Please choose a dandiya colour."; return; }
+    // Test payment simulation only. Card fields are deliberately
+    // NOT included in the POST below.
+    $("payBtn").disabled=true; $("payBtn").textContent="Processing test payment…";
+    var payload={fullName:name, phone:phone, email:email, paidTickets:tickets, childrenUnder8:children, dandiya:dandiya, pairs:dandiya?pairs:0, colour:(dandiya && pairs>=1)?$("colour").value:""};
+    var t=totals(), ref="—", emailNote="Test email was not attempted.";
+    try{
+      var res=await fetch("/.netlify/functions/send-test-email",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
+      var data=await res.json().catch(function(){return {};});
+      if(data.bookingReference) ref=data.bookingReference;
+      if(res.ok && data.ok){ emailNote="Test email sent: one to "+email+" and one to vedantmusicacademy@gmail.com."; }
+      else { emailNote="Test email could not be sent: "+(data.error || "check the Netlify email settings and try again.")+" Customer sent: "+(data.customerEmailSent?"yes":"no")+", admin sent: "+(data.adminEmailSent?"yes":"no")+"."; }
+    }catch(err){
+      emailNote="Test email could not be sent: the test-email function did not respond. Check that the site is deployed on Netlify with the email function enabled.";
+    }
+    $("conf-ref").textContent=ref;
+    $("conf-name").textContent=name;
+    $("conf-tickets").textContent=tickets+" × "+money(t.unit)+" = "+money(t.ticketCost);
+    $("conf-children").textContent=children;
+    $("conf-dandiya").textContent=(dandiya && pairs>=1)? pairs+" pairs · "+$("colour").value+" = "+money(t.dandiyaCost) : "$0.00";
+    $("conf-total").textContent=money(t.total);
+    $("emailStatus").textContent=emailNote;
+    $("regForm").style.display="none";
+    $("confirmation").style.display="block";
+    window.scrollTo(0,0);
+  };
+  render();
+})();
+</script>
+</body>
+</html>
