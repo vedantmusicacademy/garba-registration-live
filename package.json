@@ -1,0 +1,1 @@
+{"dependencies":{"nodemailer":"^6.9.14"},"description":"Root dependencies for the Garba test-email Netlify Function (Gmail SMTP version), so Netlify installs nodemailer at build time.","name":"garba-registration-live","private":true,"version":"1.0.0"}
