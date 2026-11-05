@@ -31,6 +31,10 @@
   .order{background:#2b1d18;border:1px solid #6b4a2f;border-radius:12px;padding:18px;height:auto;align-self:stretch}
   .row{display:flex;justify-content:space-between;margin:8px 0}
   .note{font-size:14px;color:#e8cfa0}
+  .pricing{text-align:center}
+  .pricing-free{display:block;margin-top:10px}
+  .dandiya-price{font-size:18px;font-weight:700;text-align:center}
+  .order-note{text-align:center;margin-top:18px}
   #confirmation{display:none}
   .success-banner{background:#1f7a4d;color:#fff;padding:14px 16px;border-radius:10px;font-weight:700;text-align:center;margin-bottom:16px}
   .success-banner span{display:block;font-weight:400;font-size:14px;margin-top:4px}
@@ -99,7 +103,7 @@
         <output id="c-count">0</output>
         <button type="button" id="c-plus" aria-label="One more child">+</button>
       </div>
-      <p>$10 per ticket · $8 per ticket for 10 or more tickets · Free for children under 8</p>
+      <p class="pricing">$10 per ticket · $8 per ticket for 10 or more tickets <span class="pricing-free">Free for children under 8</span></p>
     </section>
     </div>
 
@@ -126,7 +130,7 @@
           <option>Orange</option><option>Purple</option><option>Pink</option><option>White</option>
           <option>Black</option><option>Multicolor</option>
         </select>
-        <p class="note">$5 per pair, color is required</p>
+        <p class="note dandiya-price">$5 per pair, color is required</p>
       </div>
     </section>
 
@@ -136,7 +140,7 @@
       <div class="row"><span>Children under 8</span><span id="sum-children"></span></div>
       <div class="row" id="sum-dandiya-row"><span>Dandiya</span><span id="sum-dandiya"></span></div>
       <div class="row"><strong>Total</strong><strong id="sum-total"></strong></div>
-      <p class="note">Total updates live. Server recomputes the same total before any test email is sent from Gmail (Vedant Music Academy).</p>
+      <p class="note order-note">Total updates live. Server recomputes the same total before any test email is sent from Gmail (Vedant Music Academy).</p>
     </aside>
     </div>
 
