@@ -248,7 +248,7 @@
   $("regForm").onsubmit=async function(e){
     e.preventDefault(); $("formError").textContent="";
     var name=$("fullName").value.trim(), phone=$("phone").value.trim(), email=$("email").value.trim();
-    if(!name || !phone || !email){ $("formError").textContent="Please fill in full name, phone and email."; return; }
+    if(!name || !phone || !email){ var missing=[]; if(!name) missing.push("full name"); if(!phone) missing.push("phone number"); if(!email) missing.push("email"); var missingText=missing.length===1 ? missing[0] : missing.length===2 ? missing[0]+" and "+missing[1] : missing[0]+", "+missing[1]+" and "+missing[2]; $("formError").textContent="Please fill in your "+missingText+"."; return; }
     if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ $("formError").textContent="Please enter a valid email address."; return; }
     if(!$("cardName").value.trim() || !$("cardNumber").value.trim() || !$("expiry").value.trim() || !$("cvc").value.trim()){
       $("formError").textContent="Please fill in the test card fields."; return;
