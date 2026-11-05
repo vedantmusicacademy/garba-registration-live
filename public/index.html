@@ -23,6 +23,7 @@
   .stepper{display:flex;gap:8px;align-items:center}
   .stepper button{width:40px;height:40px;font-size:20px;border-radius:8px;border:0;background:#d9a441;cursor:pointer}
   .stepper output{font-size:18px;min-width:32px;text-align:center}
+  .stepper input{width:70px;padding:10px;border-radius:8px;border:1px solid #8a6a4a;background:#fff;color:#111;text-align:center;font-size:18px;box-sizing:border-box}
   .seg button{padding:10px 16px;border-radius:8px;border:1px solid #d9a441;background:transparent;color:#f5e9d3;cursor:pointer;margin-right:8px}
   .seg button.on{background:#d9a441;color:#111}
   button.pay{width:100%;padding:14px;font-size:17px;font-weight:700;border:0;border-radius:10px;background:#d9a441;cursor:pointer}
@@ -89,7 +90,7 @@
       <label>Paid Tickets <span class="req">*</span></label>
       <div class="stepper">
         <button type="button" id="t-minus" aria-label="One fewer paid ticket">−</button>
-        <output id="t-count">1</output>
+        <input id="t-count" type="number" inputmode="numeric" value="1" min="1" max="999" aria-label="Paid tickets">
         <button type="button" id="t-plus" aria-label="One more paid ticket">+</button>
       </div>
       <label>Children under 8 (free)</label>
@@ -98,7 +99,6 @@
         <output id="c-count">0</output>
         <button type="button" id="c-plus" aria-label="One more child">+</button>
       </div>
-      <p>Simple pricing for everyone. Buy 10 or more tickets together and every ticket drops to $8.</p>
       <p>$10 per ticket · $8 per ticket for 10 or more tickets · Free for children under 8</p>
     </section>
     </div>
@@ -116,7 +116,7 @@
         <label>Dandiya pairs <span class="req">*</span></label>
         <div class="stepper">
           <button type="button" id="p-minus" aria-label="One fewer dandiya pair">−</button>
-          <output id="p-count">0</output>
+          <input id="p-count" type="number" inputmode="numeric" value="0" min="0" max="999" aria-label="Dandiya pairs">
           <button type="button" id="p-plus" aria-label="One more dandiya pair">+</button>
         </div>
         <label for="colour">Choose Dandiya Color <span class="req" id="colour-star" hidden>*</span></label>
@@ -126,7 +126,7 @@
           <option>Orange</option><option>Purple</option><option>Pink</option><option>White</option>
           <option>Black</option><option>Multicolor</option>
         </select>
-        <p class="note">$3 per pair. Colour is required only when pairs is 1 or more. With 0 pairs, no colour is needed and dandiya cost is $0.</p>
+        <p class="note">$5 per pair, color is required</p>
       </div>
     </section>
 
@@ -182,11 +182,11 @@
   function totals(){
     var unit = tickets>=10 ? 8 : 10;
     var t = tickets*unit;
-    var d = (dandiya && pairs>=1) ? pairs*3 : 0;
+    var d = (dandiya && pairs>=1) ? pairs*5 : 0;
     return {unit:unit, ticketCost:t, dandiyaCost:d, total:t+d};
   }
   function render(){
-    $("t-count").textContent=tickets; $("c-count").textContent=children; $("p-count").textContent=pairs;
+    $("t-count").value=tickets; $("c-count").textContent=children; $("p-count").value=pairs;
     $("dandiya-fields").style.display = dandiya ? "block" : "none";
     $("d-yes").className = dandiya ? "on" : ""; $("d-no").className = dandiya ? "" : "on";
     // Colour required only when pairs >= 1.
@@ -203,12 +203,31 @@
     $("payBtn").textContent = "Pay "+money(t.total)+" (Test)";
   }
   function step(get,set,delta,min,max){ var v=Math.max(min,Math.min(max,get()+delta)); set(v); render(); }
-  $("t-minus").onclick=function(){step(function(){return tickets;},function(v){tickets=v;},-1,1,100);};
-  $("t-plus").onclick=function(){step(function(){return tickets;},function(v){tickets=v;},1,1,100);};
+  $("t-minus").onclick=function(){step(function(){return tickets;},function(v){tickets=v;},-1,1,999);};
+  $("t-plus").onclick=function(){step(function(){return tickets;},function(v){tickets=v;},1,1,999);};
   $("c-minus").onclick=function(){step(function(){return children;},function(v){children=v;},-1,0,100);};
   $("c-plus").onclick=function(){step(function(){return children;},function(v){children=v;},1,0,100);};
-  $("p-minus").onclick=function(){step(function(){return pairs;},function(v){pairs=v;},-1,0,100);};
-  $("p-plus").onclick=function(){step(function(){return pairs;},function(v){pairs=v;},1,0,100);};
+  $("p-minus").onclick=function(){step(function(){return pairs;},function(v){pairs=v;},-1,0,999);};
+  $("p-plus").onclick=function(){step(function(){return pairs;},function(v){pairs=v;},1,0,999);};
+  // Manual typing for paid tickets and dandiya pairs: the plus/minus
+  // buttons stay, and typing updates the live total too. Empty or
+  // invalid input reverts to the previous valid value on blur;
+  // out-of-range typed values are clamped. Colour requirement
+  // re-evaluates via render() (pairs >= 1 requires a colour).
+  function bindTyped(id, get, set, min, max){
+    var el=$(id);
+    el.addEventListener("input",function(){
+      if(this.value==="") return;
+      var v=parseInt(this.value,10);
+      if(isNaN(v)) return;
+      v=Math.max(min,Math.min(max,v));
+      set(v); render();
+    });
+    el.addEventListener("blur",function(){ this.value=get(); render(); });
+    el.addEventListener("change",function(){ if(this.value===""){ this.value=get(); render(); } });
+  }
+  bindTyped("t-count",function(){return tickets;},function(v){tickets=v;},1,999);
+  bindTyped("p-count",function(){return pairs;},function(v){pairs=v;},0,999);
   $("d-yes").onclick=function(){dandiya=true; render();};
   $("d-no").onclick=function(){dandiya=false; pairs=0; render();};
   $("colour").onchange=render;
