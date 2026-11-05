@@ -1,0 +1,1 @@
+{"dependencies":{"nodemailer":"^6.9.14"},"description":"Dependencies for the Garba test-email Netlify Function (Gmail SMTP version).","name":"garba-test-email-function","private":true,"version":"1.0.0"}
