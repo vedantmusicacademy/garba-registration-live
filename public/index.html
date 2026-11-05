@@ -45,6 +45,16 @@
   .success-banner span{display:block;font-weight:400;font-size:14px;margin-top:4px}
   main.confirmation-view{max-width:680px}
   main.confirmation-view .order{margin-bottom:18px;width:100%;box-sizing:border-box}
+  /* Confirmation view only: hide the Your order aside. The confirmation
+     box already shows booking reference, name, tickets, children,
+     dandiya and total, so Your order below it is duplicate. The element
+     is NOT deleted: this CSS rule only applies when main/body carry
+     confirmation-view (added on submit, for both confirmed Card/Apple
+     Pay and pending Zelle/Venmo). In form view the rule does not apply,
+     so Your order stays visible with its live total, centred title and
+     conditional children row. "Register another guest" reloads the page,
+     which clears confirmation-view and restores the form view. */
+  body.confirmation-view main.confirmation-view aside.order{display:none}
   /* Confirmation view only: hero subtitle, pills, Register heading and
      subtitle are hidden; the top thank-you line shows in place of the
      pills. The form view is untouched (these rules only apply when the
