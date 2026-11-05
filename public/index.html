@@ -12,7 +12,9 @@
   header h1{margin:8px 0;font-size:42px}
   .pills{text-align:center;padding:8px 16px 20px}
   .pill{display:inline-block;border:1px solid #d9a441;border-radius:999px;padding:6px 12px;margin:4px}
-  main{max-width:980px;margin:0 auto;padding:0 16px 40px;display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:stretch}
+  main{max-width:980px;margin:0 auto;padding:0 16px 40px}
+  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:stretch}
+  .two-col .order{margin-bottom:18px}
   .box{background:#2b1d18;border:1px solid #6b4a2f;border-radius:12px;padding:18px;margin-bottom:18px}
   .box h2{text-align:center;margin-top:0}
   label{display:block;margin:12px 0 4px;font-weight:600}
@@ -31,12 +33,11 @@
   #confirmation{display:none}
   .success-banner{background:#1f7a4d;color:#fff;padding:14px 16px;border-radius:10px;font-weight:700;text-align:center;margin-bottom:16px}
   .success-banner span{display:block;font-weight:400;font-size:14px;margin-top:4px}
-  main.confirmation-view{grid-template-columns:1fr;max-width:680px}
-  main.confirmation-view .order{margin-bottom:18px}
+  main.confirmation-view{max-width:680px}
+  main.confirmation-view .order{margin-bottom:18px;width:100%;box-sizing:border-box}
   footer{text-align:center;padding:20px;color:#e8cfa0}
   a{color:#ffd27a}
-  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:stretch}
-  @media(max-width:700px){main{grid-template-columns:1fr}.two-col{grid-template-columns:1fr}}
+  @media(max-width:700px){.two-col{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -54,11 +55,12 @@
 </div>
 
 <main>
-<div>
   <h2 style="text-align:center">Register for Garba Night</h2>
   <p style="text-align:center">Fill in your details, choose your tickets, and pay by card. Your total updates as you go.</p>
 
   <form id="regForm" novalidate>
+    <!-- Top row: Your details + Your order, equal width -->
+    <div class="two-col">
     <!-- Box 1 -->
     <section class="box" aria-labelledby="h-details">
       <h2 id="h-details">Your details</h2>
@@ -71,7 +73,17 @@
       <input id="email" type="email" required autocomplete="email">
     </section>
 
-    <!-- Boxes 2 and 3 side by side, same size -->
+    <aside class="order" aria-labelledby="h-order">
+      <h2 id="h-order">Your order</h2>
+      <div class="row"><span>Tickets</span><span id="sum-tickets"></span></div>
+      <div class="row"><span>Children under 8</span><span id="sum-children"></span></div>
+      <div class="row" id="sum-dandiya-row"><span>Dandiya</span><span id="sum-dandiya"></span></div>
+      <div class="row"><strong>Total</strong><strong id="sum-total"></strong></div>
+      <p class="note">Total updates live. Server recomputes the same total before any test email is sent from Gmail (Vedant Music Academy).</p>
+    </aside>
+    </div>
+
+    <!-- Middle row: Tickets + Dandiya across the full page width -->
     <div class="two-col">
     <section class="box" aria-labelledby="h-tickets">
       <h2 id="h-tickets">Tickets</h2>
@@ -149,16 +161,6 @@
     <p id="emailStatus" class="note"></p>
     <button type="button" class="pay" onclick="location.reload()">Register another guest</button>
   </section>
-</div>
-
-<aside class="order" aria-labelledby="h-order">
-  <h2 id="h-order">Your order</h2>
-  <div class="row"><span>Tickets</span><span id="sum-tickets"></span></div>
-  <div class="row"><span>Children under 8</span><span id="sum-children"></span></div>
-  <div class="row" id="sum-dandiya-row"><span>Dandiya</span><span id="sum-dandiya"></span></div>
-  <div class="row"><strong>Total</strong><strong id="sum-total"></strong></div>
-  <p class="note">Total updates live. Server recomputes the same total before any test email is sent from Gmail (Vedant Music Academy).</p>
-</aside>
 </main>
 
 <footer>Presented by Radhe Krishna Sangeet &amp; Vedant Music Academy</footer>
