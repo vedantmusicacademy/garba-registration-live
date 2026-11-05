@@ -70,9 +70,9 @@
   <p class="reg-subtitle" style="text-align:center">Fill in your details, choose your tickets, and pay by card. Your total updates as you go.</p>
 
   <form id="regForm" novalidate>
-    <!-- Top row: Your details + Your order, equal width -->
+    <!-- Top row: Your details + Tickets, equal width -->
     <div class="two-col">
-    <!-- Box 1 -->
+<!-- Box 1 -->
     <section class="box" aria-labelledby="h-details">
       <h2 id="h-details">Your details</h2>
       <p style="text-align:center">We use these to confirm your booking.</p>
@@ -84,19 +84,7 @@
       <input id="email" type="email" required autocomplete="email">
     </section>
 
-    <aside class="order" aria-labelledby="h-order">
-      <h2 id="h-order">Your order</h2>
-      <div class="row"><span>Tickets</span><span id="sum-tickets"></span></div>
-      <div class="row"><span>Children under 8</span><span id="sum-children"></span></div>
-      <div class="row" id="sum-dandiya-row"><span>Dandiya</span><span id="sum-dandiya"></span></div>
-      <div class="row"><strong>Total</strong><strong id="sum-total"></strong></div>
-      <p class="note">Total updates live. Server recomputes the same total before any test email is sent from Gmail (Vedant Music Academy).</p>
-    </aside>
-    </div>
-
-    <!-- Middle row: Tickets + Dandiya across the full page width -->
-    <div class="two-col">
-    <section class="box" aria-labelledby="h-tickets">
+<section class="box" aria-labelledby="h-tickets">
       <h2 id="h-tickets">Tickets</h2>
       <label>Paid Tickets <span class="req">*</span></label>
       <div class="stepper">
@@ -110,12 +98,14 @@
         <output id="c-count">0</output>
         <button type="button" id="c-plus" aria-label="One more child">+</button>
       </div>
-      <p class="note">Children under 8 are free — tell us how many are coming so we can plan the space.</p>
       <p>Simple pricing for everyone. Buy 10 or more tickets together and every ticket drops to $8.</p>
       <p>$10 per ticket · $8 per ticket for 10 or more tickets · Free for children under 8</p>
     </section>
+    </div>
 
-    <!-- Box 3 -->
+    <!-- Second row: Dandiya + Your order, equal width -->
+    <div class="two-col">
+<!-- Box 3 -->
     <section class="box" aria-labelledby="h-dandiya">
       <h2 id="h-dandiya">Do you need dandiya sticks?</h2>
       <div class="seg" role="group" aria-label="Do you need dandiya sticks">
@@ -139,6 +129,15 @@
         <p class="note">$3 per pair. Colour is required only when pairs is 1 or more. With 0 pairs, no colour is needed and dandiya cost is $0.</p>
       </div>
     </section>
+
+<aside class="order" aria-labelledby="h-order">
+      <h2 id="h-order">Your order</h2>
+      <div class="row"><span>Tickets</span><span id="sum-tickets"></span></div>
+      <div class="row"><span>Children under 8</span><span id="sum-children"></span></div>
+      <div class="row" id="sum-dandiya-row"><span>Dandiya</span><span id="sum-dandiya"></span></div>
+      <div class="row"><strong>Total</strong><strong id="sum-total"></strong></div>
+      <p class="note">Total updates live. Server recomputes the same total before any test email is sent from Gmail (Vedant Music Academy).</p>
+    </aside>
     </div>
 
     <!-- Box 4 -->
