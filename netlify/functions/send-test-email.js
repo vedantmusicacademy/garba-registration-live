@@ -57,56 +57,110 @@ function isIntInRange(v, min, max) {
 }
 
 function buildEmailBody(data, ref, total, ticketCost, dandiyaCost, isAdmin) {
-  const colourLine =
-    data.dandiya && data.pairs >= 1
-      ? `Dandiya colour: ${data.colour}`
-      : "Dandiya colour: — (no dandiya pairs)";
-  const dandiyaLine =
-    data.dandiya && data.pairs >= 1
-      ? `${data.pairs} pair${data.pairs === 1 ? "" : "s"} · ${colourLine}`
-      : data.dandiya
-        ? "Yes · 0 pairs"
-        : "No";
+  const hasDandiya = data.dandiya && data.pairs >= 1;
+  const dandiyaNeeded = data.dandiya ? "Yes" : "No";
+  const dandiyaPairs = hasDandiya
+    ? `${data.pairs} pair${data.pairs === 1 ? "" : "s"}`
+    : "0 pairs";
+  const colourValue = hasDandiya ? data.colour : "—";
   const heading = isAdmin
     ? "New TEST registration — Navratri Dhamaka"
     : "Your TEST ticket confirmation — Navratri Dhamaka";
   const intro = isAdmin
     ? "A new test registration was submitted. This is a TEST registration. No money was charged."
     : "Thank you for registering. This is a TEST registration. No money was charged.";
+  // Plain-text fallback: same facts, same order, no styling.
   const text =
     `${heading}\n` +
     `${intro}\n\n` +
     `Booking reference: ${ref}\n` +
+    `Total (test): ${money(total)}\n` +
+    `Paid tickets: ${data.paidTickets} × ${data.paidTickets >= 10 ? "$8.00" : "$10.00"} = ${money(ticketCost)}\n` +
+    `Dandiya cost: ${money(dandiyaCost)}\n\n` +
+    `Event: Navratri Dhamaka\n` +
+    `Date: Friday, October 15, 2027\n` +
+    `Time: 7:00–11:00 PM\n` +
+    `Venue: Bartlett Park District\n` +
+    `Address: 700 S Bartlett Rd, Bartlett, IL 60103\n` +
+    `Directions: ${DIRECTIONS_URL}\n\n` +
     `Full name: ${data.fullName}\n` +
     `Phone: ${data.phone}\n` +
     `Email: ${data.email}\n` +
-    `Paid tickets: ${data.paidTickets} × ${data.paidTickets >= 10 ? "$8.00" : "$10.00"} = ${money(ticketCost)}\n` +
+    `Paid tickets: ${data.paidTickets}\n` +
     `Children under 8 (free): ${data.childrenUnder8}\n` +
-    `Dandiya: ${dandiyaLine}\n` +
-    `Dandiya cost: ${money(dandiyaCost)}\n` +
-    `Total (test): ${money(total)}\n\n` +
-    `Event: Navratri Dhamaka\n` +
-    `Presented by: Radhe Krishna Sangeet and Vedant Music Academy\n` +
-    `${EVENT_LINE}\n` +
-    `Directions: ${DIRECTIONS_URL}\n`;
+    `Dandiya required: ${dandiyaNeeded}\n` +
+    `Dandiya pairs: ${dandiyaPairs}\n` +
+    (hasDandiya ? `Dandiya colour: ${colourValue}\n` : ``) + `\n` +
+    `Presented by Radhe Krishna Sangeet and Vedant Music Academy\n` +
+    `TEST registration — No money was charged.\n`;
+  // Colourful HTML: tables + inline styles only, system fonts,
+  // no external images, fonts or JavaScript. Max width 600px.
+  // Sections in order: header, booking code, total, event/address,
+  // details, footer. User values are escaped.
+  const e = escapeHtml;
   const html =
-    `<h2>${escapeHtml(heading)}</h2>` +
-    `<p>${escapeHtml(intro)}</p>` +
-    `<p><strong>Booking reference:</strong> ${escapeHtml(ref)}</p>` +
-    `<ul>` +
-    `<li>Full name: ${escapeHtml(data.fullName)}</li>` +
-    `<li>Phone: ${escapeHtml(data.phone)}</li>` +
-    `<li>Email: ${escapeHtml(data.email)}</li>` +
-    `<li>Paid tickets: ${data.paidTickets} × ${data.paidTickets >= 10 ? "$8.00" : "$10.00"} = ${escapeHtml(money(ticketCost))}</li>` +
-    `<li>Children under 8 (free): ${data.childrenUnder8}</li>` +
-    `<li>Dandiya: ${escapeHtml(dandiyaLine)}</li>` +
-    `<li>Dandiya cost: ${escapeHtml(money(dandiyaCost))}</li>` +
-    `<li><strong>Total (test): ${escapeHtml(money(total))}</strong></li>` +
-    `</ul>` +
-    `<p>Event: Navratri Dhamaka<br>` +
-    `Presented by: Radhe Krishna Sangeet and Vedant Music Academy<br>` +
-    `${escapeHtml(EVENT_LINE)}<br>` +
-    `<a href="${DIRECTIONS_URL}">Get directions</a></p>`;
+    `<table width="100%" cellpadding="0" cellspacing="0" style="background-color:#fff8ee;font-family:Arial,Helvetica,sans-serif;color:#2b1a0e;">` +
+    `<tr><td align="center" style="padding:16px;">` +
+    `<table width="600" cellpadding="0" cellspacing="0" style="width:100%;max-width:600px;background-color:#ffffff;border:1px solid #e8d9b8;">` +
+    // 1. Dark header band.
+    `<tr><td align="center" style="background-color:#2b1a0e;padding:28px 20px;">` +
+    `<div style="font-family:Georgia,serif;font-size:34px;line-height:1.2;color:#f5c542;font-weight:bold;">Navratri Dhamaka</div>` +
+    `<div style="font-size:14px;line-height:1.5;color:#ffffff;margin-top:8px;">Radhe Krishna Sangeet and Vedant Music Academy present</div>` +
+    `<div style="font-size:14px;line-height:1.5;color:#ffd98a;margin-top:6px;">${e(heading)}</div>` +
+    `</td></tr>` +
+    `<tr><td style="padding:24px 24px 8px 24px;">` +
+    `<p style="font-size:15px;line-height:1.6;margin:0 0 16px 0;">${e(intro)}</p>` +
+    // 2. Large booking-code box.
+    `<table width="100%" cellpadding="0" cellspacing="0" style="background-color:#fff3d6;border:2px solid #f5c542;">` +
+    `<tr><td align="center" style="padding:20px;">` +
+    `<div style="font-size:13px;letter-spacing:2px;color:#7a4a00;font-weight:bold;">BOOKING REFERENCE</div>` +
+    `<div style="font-family:Georgia,serif;font-size:42px;line-height:1.2;color:#2b1a0e;font-weight:bold;margin-top:6px;">${e(ref)}</div>` +
+    `<div style="font-size:13px;color:#5a3d1a;margin-top:6px;">Please keep this code for entry.</div>` +
+    `</td></tr></table>` +
+    // 3. Separate total box with breakdown.
+    `<table width="100%" cellpadding="0" cellspacing="0" style="background-color:#ffedd6;border:1px solid #e67e22;margin-top:16px;">` +
+    `<tr><td style="padding:20px;">` +
+    `<div style="font-size:13px;letter-spacing:2px;color:#7a3c00;font-weight:bold;">TOTAL (TEST)</div>` +
+    `<div style="font-family:Georgia,serif;font-size:36px;line-height:1.2;color:#2b1a0e;font-weight:bold;margin-top:6px;">${e(money(total))}</div>` +
+    `<div style="font-size:14px;line-height:1.7;color:#2b1a0e;margin-top:10px;">` +
+    `Paid tickets: ${data.paidTickets} × ${data.paidTickets >= 10 ? "$8.00" : "$10.00"} = ${e(money(ticketCost))}<br>` +
+    `Dandiya cost: ${e(money(dandiyaCost))}<br>` +
+    `Children under 8: free` +
+    `</div></td></tr></table>` +
+    // 4. Separate event/address box.
+    `<table width="100%" cellpadding="0" cellspacing="0" style="background-color:#fdf6ec;border:1px solid #e8d9b8;margin-top:16px;">` +
+    `<tr><td style="padding:20px;">` +
+    `<div style="font-size:13px;letter-spacing:2px;color:#7a4a00;font-weight:bold;">EVENT &amp; ADDRESS</div>` +
+    `<div style="font-size:15px;line-height:1.8;color:#2b1a0e;margin-top:10px;">` +
+    `<strong>Date:</strong> Friday, October 15, 2027<br>` +
+    `<strong>Time:</strong> 7:00–11:00 PM<br>` +
+    `<strong>Venue:</strong> Bartlett Park District<br>` +
+    `<strong>Address:</strong> 700 S Bartlett Rd, Bartlett, IL 60103<br>` +
+    `<a href="${DIRECTIONS_URL}" style="color:#b45309;font-weight:bold;">Get directions</a>` +
+    `</div></td></tr></table>` +
+    // 5. Details section.
+    `<div style="font-size:16px;font-weight:bold;color:#2b1a0e;margin-top:24px;margin-bottom:10px;">Your details</div>` +
+    `<table width="100%" cellpadding="8" cellspacing="0" style="font-size:14px;line-height:1.6;border-collapse:collapse;">` +
+    `<tr><td style="border-bottom:1px solid #eee0c8;color:#7a4a00;width:180px;">Full name</td><td style="border-bottom:1px solid #eee0c8;">${e(data.fullName)}</td></tr>` +
+    `<tr><td style="border-bottom:1px solid #eee0c8;color:#7a4a00;">Phone</td><td style="border-bottom:1px solid #eee0c8;">${e(data.phone)}</td></tr>` +
+    `<tr><td style="border-bottom:1px solid #eee0c8;color:#7a4a00;">Email</td><td style="border-bottom:1px solid #eee0c8;">${e(data.email)}</td></tr>` +
+    `<tr><td style="border-bottom:1px solid #eee0c8;color:#7a4a00;">Paid tickets</td><td style="border-bottom:1px solid #eee0c8;">${data.paidTickets}</td></tr>` +
+    `<tr><td style="border-bottom:1px solid #eee0c8;color:#7a4a00;">Children under 8 (free)</td><td style="border-bottom:1px solid #eee0c8;">${data.childrenUnder8}</td></tr>` +
+    `<tr><td style="border-bottom:1px solid #eee0c8;color:#7a4a00;">Dandiya required</td><td style="border-bottom:1px solid #eee0c8;">${e(dandiyaNeeded)}</td></tr>` +
+    `<tr><td style="border-bottom:1px solid #eee0c8;color:#7a4a00;">Dandiya pairs</td><td style="border-bottom:1px solid #eee0c8;">${e(dandiyaPairs)}</td></tr>` +
+    (hasDandiya
+      ? `<tr><td style="border-bottom:1px solid #eee0c8;color:#7a4a00;">Dandiya colour</td><td style="border-bottom:1px solid #eee0c8;">${e(data.colour)}</td></tr>`
+      : ``) +
+    `<tr><td style="color:#7a4a00;">Dandiya cost</td><td>${e(money(dandiyaCost))}</td></tr>` +
+    `</table>` +
+    // 6. Footer.
+    `<table width="100%" cellpadding="0" cellspacing="0" style="background-color:#2b1a0e;margin-top:24px;">` +
+    `<tr><td align="center" style="padding:18px;color:#ffffff;font-size:13px;line-height:1.6;">` +
+    `Presented by Radhe Krishna Sangeet and Vedant Music Academy<br>` +
+    `TEST registration — No money was charged.` +
+    `</td></tr></table>` +
+    `</td></tr></table>` +
+    `</td></tr></table>`;
   return { text, html };
 }
 
