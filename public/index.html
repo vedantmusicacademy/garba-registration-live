@@ -37,6 +37,11 @@
   .dandiya-price{font-size:18px;font-weight:700;text-align:center}
   .order-note{text-align:center;margin-top:18px}
   .pending-note{background:#fff3d6;border:2px solid #f5c542;color:#2b1a0e;border-radius:10px;padding:14px 16px;font-weight:600;line-height:1.6}
+  .dest-wrap{display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap;vertical-align:middle}
+  .dest{font-size:19px;font-weight:700;color:#ffd27a;background:rgba(217,164,65,.18);border:1px solid #d9a441;border-radius:999px;padding:4px 12px;word-break:break-all}
+  .pending-note .dest{color:#2b1a0e;background:#ffe9a8}
+  button.copy-btn{padding:6px 12px;border-radius:999px;border:1px solid #d9a441;background:#d9a441;color:#111;font-weight:700;cursor:pointer;font-size:14px}
+  button.copy-btn:hover{background:#ffd27a}
   #confirmation{display:none}
   .success-banner{background:#1f7a4d;color:#fff;padding:14px 16px;border-radius:10px;font-weight:700;text-align:center;margin-bottom:16px}
   .success-banner span{display:block;font-weight:400;font-size:14px;margin-top:4px}
@@ -194,6 +199,31 @@
   var tickets=1, children=0, dandiya=true, pairs=0, paymentMethod="card";
   function paymentDestination(){ return paymentMethod==="zelle" ? "vedantmusicacademy@gmail.com" : paymentMethod==="venmo" ? "@vedantmusicacademy" : ""; }
   function paymentMethodLabel(){ return paymentMethod==="zelle" ? "Zelle" : paymentMethod==="venmo" ? "Venmo" : "Card"; }
+  // Copy destination on CLICK only (hover alone never copies):
+  // clipboard API first, textarea/select fallback if unavailable.
+  // The button label flips to "Copied ✓" for ~2 seconds, then back.
+  // Copying never changes the payment method, total, or any field.
+  function destHTML(dest){ return '<span class="dest-wrap"><span class="dest">'+dest+'</span><button type="button" class="copy-btn" data-copy="'+dest+'">Copy</button></span>'; }
+  function copyText(btn, text){
+    function done(){
+      var original="Copy"; btn.textContent="Copied ✓";
+      setTimeout(function(){ btn.textContent=original; }, 2000);
+    }
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(done, function(){ copyFallback(text); done(); });
+    } else { copyFallback(text); done(); }
+  }
+  function copyFallback(text){
+    var ta=document.createElement("textarea");
+    ta.value=text; ta.style.position="fixed"; ta.style.opacity="0";
+    document.body.appendChild(ta); ta.select();
+    try{ document.execCommand("copy"); }catch(e){}
+    document.body.removeChild(ta);
+  }
+  function bindCopyBtn(container){
+    var b=container.querySelector(".copy-btn");
+    if(b) b.onclick=function(){ copyText(b, b.getAttribute("data-copy")); };
+  }
   function $(id){return document.getElementById(id);}
   function money(n){return "$"+n.toFixed(2);}
   function totals(){
@@ -241,7 +271,8 @@
     } else {
       $("pay-note").textContent = "Manual payment: your registration stays pending until payment is received and confirmed.";
       $("manual-instruction").hidden = false;
-      $("manual-instruction").textContent = "Send "+money(t.total)+" via "+paymentMethodLabel()+" to "+paymentDestination()+". Please include your booking code as the memo after you register. Your ticket will be confirmed after payment is received.";
+      $("manual-instruction").innerHTML = "Send "+money(t.total)+" via "+paymentMethodLabel()+" to "+destHTML(paymentDestination())+". Please include your booking code as the memo after you register. Your ticket will be confirmed after payment is received.";
+      bindCopyBtn($("manual-instruction"));
       $("payBtn").textContent = "Register with "+paymentMethodLabel();
     }
   }
@@ -344,7 +375,8 @@
     $("emailSuccessText").textContent = isPending ? "Pending-payment emails were sent to the customer and to Vedant Music Academy." : "Confirmation emails were sent to the customer and to Vedant Music Academy.";
     if(isPending){
       $("pendingNotice").hidden = false;
-      $("pendingNotice").textContent = "Registration pending — please send "+money(t.total)+" via "+paymentMethodLabel()+" to "+paymentDestination()+" and include your booking code "+ref+" as the memo. Your ticket will be confirmed after payment is received.";
+      $("pendingNotice").innerHTML = "Registration pending — please send "+money(t.total)+" via "+paymentMethodLabel()+" to "+destHTML(paymentDestination())+" and include your booking code "+ref+" as the memo. Your ticket will be confirmed after payment is received.";
+      bindCopyBtn($("pendingNotice"));
       var topThankyou=document.querySelector(".top-thankyou");
       if(topThankyou) topThankyou.textContent = "Thank you for registering! Your payment is pending.";
     } else {
