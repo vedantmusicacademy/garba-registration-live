@@ -122,9 +122,9 @@
       <label for="cardName">Name on credit card <span class="req">*</span></label>
       <input id="cardName" required autocomplete="cc-name">
       <label for="cardNumber">Card Number <span class="req">*</span></label>
-      <input id="cardNumber" required inputmode="numeric" autocomplete="cc-number" placeholder="4242 4242 4242 4242 (test)">
+      <input id="cardNumber" required inputmode="numeric" autocomplete="cc-number" placeholder="4242 4242 4242 4242 (test)" maxlength="19">
       <label for="expiry">Expiry <span class="req">*</span></label>
-      <input id="expiry" required placeholder="MM/YY">
+      <input id="expiry" required placeholder="MM/YY" maxlength="5">
       <label for="cvc">CVC <span class="req">*</span></label>
       <input id="cvc" required inputmode="numeric" placeholder="123">
       <p id="formError" role="alert" style="color:#ff9a9a"></p>
@@ -205,6 +205,11 @@
   $("d-yes").onclick=function(){dandiya=true; render();};
   $("d-no").onclick=function(){dandiya=false; pairs=0; render();};
   $("colour").onchange=render;
+  // Auto-format test card fields only: card number in groups of 4,
+  // expiry as MM/YY with the slash added automatically. Card details
+  // are still never sent to the function.
+  $("cardNumber").addEventListener("input",function(){ var d=this.value.replace(/\D/g,"").slice(0,16); this.value=d.replace(/(.{4})/g,"$1 ").trim(); });
+  $("expiry").addEventListener("input",function(){ var d=this.value.replace(/\D/g,"").slice(0,4); this.value=d.length>2 ? d.slice(0,2)+"/"+d.slice(2) : d; });
   $("regForm").onsubmit=async function(e){
     e.preventDefault(); $("formError").textContent="";
     var name=$("fullName").value.trim(), phone=$("phone").value.trim(), email=$("email").value.trim();
