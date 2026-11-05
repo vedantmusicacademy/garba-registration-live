@@ -250,9 +250,27 @@
     var name=$("fullName").value.trim(), phone=$("phone").value.trim(), email=$("email").value.trim();
     if(!name || !phone || !email){ var missing=[]; if(!name) missing.push("full name"); if(!phone) missing.push("phone number"); if(!email) missing.push("email"); var missingText=missing.length===1 ? missing[0] : missing.length===2 ? missing[0]+" and "+missing[1] : missing[0]+", "+missing[1]+" and "+missing[2]; $("formError").textContent="Please fill in your "+missingText+"."; return; }
     if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ $("formError").textContent="Please enter a valid email address."; return; }
-    if(!$("cardName").value.trim() || !$("cardNumber").value.trim() || !$("expiry").value.trim() || !$("cvc").value.trim()){
-      $("formError").textContent="Please fill in the test card fields."; return;
-    }
+    // Card fields: one field at a time, in this order, so the message
+    // names only the field that is actually missing or wrong.
+    // Test preview only: no bank or issuer check is made.
+    if(!$("cardName").value.trim()){ $("formError").textContent="Please fill in your name on the card."; return; }
+    if(!$("cardNumber").value.trim()){ $("formError").textContent="Please fill in your card number."; return; }
+    var cardDigits=$("cardNumber").value.replace(/\D/g,"");
+    if(cardDigits.length<13 || cardDigits.length>16){ $("formError").textContent="Please enter a valid card number."; return; }
+    if(!$("expiry").value.trim()){ $("formError").textContent="Please fill in your expiry date."; return; }
+    if(!/^(0[1-9]|1[0-2])\/\d{2}$/.test($("expiry").value.trim())){ $("formError").textContent="Please enter a valid expiry date."; return; }
+    var expParts=$("expiry").value.trim().split("/");
+    var expMonth=parseInt(expParts[0],10), expYear=2000+parseInt(expParts[1],10);
+    var nowDate=new Date();
+    if(expYear<nowDate.getFullYear() || (expYear===nowDate.getFullYear() && expMonth<nowDate.getMonth()+1)){ $("formError").textContent="Your expiry date has passed. Please enter a future expiry date."; return; }
+    if(!$("cvc").value.trim()){ $("formError").textContent="Please fill in your CVC."; return; }
+    if(!/^\d{3,4}$/.test($("cvc").value.trim())){ $("formError").textContent="Please enter a valid CVC."; return; }
+    // Dandiya choice and pairs cannot be empty through the page controls
+    // (Yes/No always has one selected; pairs are clamped 0–999 and an
+    // empty typed value reverts on blur), but keep defensive checks so
+    // any such failure still names its own field.
+    if(dandiya!==true && dandiya!==false){ $("formError").textContent="Please choose whether you need dandiya sticks."; return; }
+    if(!Number.isFinite(pairs)){ $("formError").textContent="Please fill in your dandiya pairs."; return; }
     if(dandiya && pairs>=1 && !$("colour").value){ $("formError").textContent="Please choose a dandiya colour."; return; }
     // Test payment simulation only. Card fields are deliberately
     // NOT included in the POST below.
