@@ -37,11 +37,8 @@
   .dandiya-price{font-size:18px;font-weight:700;text-align:center}
   .order-note{text-align:center;margin-top:18px}
   .pending-note{background:#fff3d6;border:2px solid #f5c542;color:#2b1a0e;border-radius:10px;padding:14px 16px;font-weight:600;line-height:1.6}
-  .dest-wrap{display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap;vertical-align:middle}
   .dest{font-size:19px;font-weight:700;color:#ffd27a;background:rgba(217,164,65,.18);border:1px solid #d9a441;border-radius:999px;padding:4px 12px;word-break:break-all}
   .pending-note .dest{color:#2b1a0e;background:#ffe9a8}
-  button.copy-btn{padding:6px 12px;border-radius:999px;border:1px solid #d9a441;background:#d9a441;color:#111;font-weight:700;cursor:pointer;font-size:14px}
-  button.copy-btn:hover{background:#ffd27a}
   #confirmation{display:none}
   .success-banner{background:#1f7a4d;color:#fff;padding:14px 16px;border-radius:10px;font-weight:700;text-align:center;margin-bottom:16px}
   .success-banner span{display:block;font-weight:400;font-size:14px;margin-top:4px}
@@ -158,6 +155,7 @@
         <button type="button" id="pm-card" class="on">Card</button>
         <button type="button" id="pm-zelle">Zelle</button>
         <button type="button" id="pm-venmo">Venmo</button>
+        <button type="button" id="pm-applepay">Apple Pay</button>
       </div>
       <p class="note" id="pay-note">Test card preview only. Card details are never sent to the test-email function and no money is charged.</p>
       <div id="card-fields">
@@ -198,32 +196,11 @@
 (function(){
   var tickets=1, children=0, dandiya=true, pairs=0, paymentMethod="card";
   function paymentDestination(){ return paymentMethod==="zelle" ? "vedantmusicacademy@gmail.com" : paymentMethod==="venmo" ? "@vedantmusicacademy" : ""; }
-  function paymentMethodLabel(){ return paymentMethod==="zelle" ? "Zelle" : paymentMethod==="venmo" ? "Venmo" : "Card"; }
-  // Copy destination on CLICK only (hover alone never copies):
-  // clipboard API first, textarea/select fallback if unavailable.
-  // The button label flips to "Copied ✓" for ~2 seconds, then back.
-  // Copying never changes the payment method, total, or any field.
-  function destHTML(dest){ return '<span class="dest-wrap"><span class="dest">'+dest+'</span><button type="button" class="copy-btn" data-copy="'+dest+'">Copy</button></span>'; }
-  function copyText(btn, text){
-    function done(){
-      var original="Copy"; btn.textContent="Copied ✓";
-      setTimeout(function(){ btn.textContent=original; }, 2000);
-    }
-    if(navigator.clipboard && navigator.clipboard.writeText){
-      navigator.clipboard.writeText(text).then(done, function(){ copyFallback(text); done(); });
-    } else { copyFallback(text); done(); }
-  }
-  function copyFallback(text){
-    var ta=document.createElement("textarea");
-    ta.value=text; ta.style.position="fixed"; ta.style.opacity="0";
-    document.body.appendChild(ta); ta.select();
-    try{ document.execCommand("copy"); }catch(e){}
-    document.body.removeChild(ta);
-  }
-  function bindCopyBtn(container){
-    var b=container.querySelector(".copy-btn");
-    if(b) b.onclick=function(){ copyText(b, b.getAttribute("data-copy")); };
-  }
+  function paymentMethodLabel(){ return paymentMethod==="zelle" ? "Zelle" : paymentMethod==="venmo" ? "Venmo" : paymentMethod==="apple_pay" ? "Apple Pay" : "Card"; }
+  // Highlighted destination pill only — no Copy button (removed
+  // at the owner's request: it did not look good). Users can still
+  // select the highlighted text manually if they want to copy it.
+  function destHTML(dest){ return '<span class="dest">'+dest+'</span>'; }
   function $(id){return document.getElementById(id);}
   function money(n){return "$"+n.toFixed(2);}
   function totals(){
@@ -259,6 +236,7 @@
     $("pm-card").className = paymentMethod==="card" ? "on" : "";
     $("pm-zelle").className = paymentMethod==="zelle" ? "on" : "";
     $("pm-venmo").className = paymentMethod==="venmo" ? "on" : "";
+    $("pm-applepay").className = paymentMethod==="apple_pay" ? "on" : "";
     $("card-fields").style.display = paymentMethod==="card" ? "block" : "none";
     $("cardName").required = paymentMethod==="card";
     $("cardNumber").required = paymentMethod==="card";
@@ -268,11 +246,19 @@
       $("pay-note").textContent = "Test card preview only. Card details are never sent to the test-email function and no money is charged.";
       $("manual-instruction").hidden = true;
       $("payBtn").textContent = "Pay "+money(t.total)+" (Test)";
+    } else if(paymentMethod==="apple_pay"){
+      // Apple Pay TEST simulation only, like the test card: no real
+      // Apple Pay sheet is opened, no real money moves, and no
+      // wallet details are sent. Real Apple Pay needs live Stripe
+      // plus Apple Pay domain/merchant setup, which is not in place.
+      // Apple Pay is instant (confirmed), NOT pending like Zelle/Venmo.
+      $("pay-note").textContent = "Apple Pay (Test): in test mode this simulates an Apple Pay payment — no real Apple Pay charge is made. In the live version, Apple Pay will open on Apple devices and charge via Stripe.";
+      $("manual-instruction").hidden = true;
+      $("payBtn").textContent = "Pay with Apple Pay (Test) — "+money(t.total);
     } else {
       $("pay-note").textContent = "Manual payment: your registration stays pending until payment is received and confirmed.";
       $("manual-instruction").hidden = false;
       $("manual-instruction").innerHTML = "Send "+money(t.total)+" via "+paymentMethodLabel()+" to "+destHTML(paymentDestination())+". Please include your booking code as the memo after you register. Your ticket will be confirmed after payment is received.";
-      bindCopyBtn($("manual-instruction"));
       $("payBtn").textContent = "Register with "+paymentMethodLabel();
     }
   }
@@ -307,6 +293,7 @@
   $("pm-card").onclick=function(){paymentMethod="card"; render();};
   $("pm-zelle").onclick=function(){paymentMethod="zelle"; render();};
   $("pm-venmo").onclick=function(){paymentMethod="venmo"; render();};
+  $("pm-applepay").onclick=function(){paymentMethod="apple_pay"; render();};
   $("colour").onchange=render;
   // Auto-format test card fields only: card number in groups of 4,
   // expiry as MM/YY with the slash added automatically. Card details
@@ -321,8 +308,9 @@
     // Card fields: one field at a time, in this order, so the message
     // names only the field that is actually missing or wrong.
     // Test preview only: no bank or issuer check is made.
-    // Zelle/Venmo skip card validation entirely: the card fields
-    // are hidden and no card field is sent in that path.
+    // Zelle/Venmo/Apple Pay skip card validation entirely: the card
+    // fields are hidden and no card field is sent in those paths.
+    // Apple Pay is a test simulation here, not a real wallet charge.
     if(paymentMethod==="card"){
     if(!$("cardName").value.trim()){ $("formError").textContent="Please fill in your name on the card."; return; }
     if(!$("cardNumber").value.trim()){ $("formError").textContent="Please fill in your card number."; return; }
@@ -346,14 +334,14 @@
     if(dandiya && pairs>=1 && !$("colour").value){ $("formError").textContent="Please choose a dandiya colour."; return; }
     // Test payment simulation only. Card fields are deliberately
     // NOT included in the POST below, in every payment path.
-    $("payBtn").disabled=true; $("payBtn").textContent=paymentMethod==="card" ? "Processing test payment…" : "Processing test registration…";
+    $("payBtn").disabled=true; $("payBtn").textContent=(paymentMethod==="card" || paymentMethod==="apple_pay") ? "Processing test payment…" : "Processing test registration…";
     var payload={fullName:name, phone:phone, email:email, paidTickets:tickets, childrenUnder8:children, dandiya:dandiya, pairs:dandiya?pairs:0, colour:(dandiya && pairs>=1)?$("colour").value:"", paymentMethod:paymentMethod};
     var t=totals(), ref="—", emailNote="Test email was not attempted.", emailOk=false;
     try{
       var res=await fetch("/.netlify/functions/send-test-email",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
       var data=await res.json().catch(function(){return {};});
       if(data.bookingReference) ref=data.bookingReference;
-      if(res.ok && data.ok && data.customerEmailSent && data.adminEmailSent){ emailOk=true; emailNote=paymentMethod==="card" ? "Test email sent: one to "+email+" and one to vedantmusicacademy@gmail.com." : "Pending-payment test email sent: one to "+email+" and one to vedantmusicacademy@gmail.com."; }
+      if(res.ok && data.ok && data.customerEmailSent && data.adminEmailSent){ emailOk=true; emailNote=(paymentMethod==="card" || paymentMethod==="apple_pay") ? "Test email sent: one to "+email+" and one to vedantmusicacademy@gmail.com." : "Pending-payment test email sent: one to "+email+" and one to vedantmusicacademy@gmail.com."; }
       else { emailNote="Test email could not be sent: "+(data.error || "check the Netlify email settings and try again.")+" Customer sent: "+(data.customerEmailSent?"yes":"no")+", admin sent: "+(data.adminEmailSent?"yes":"no")+"."; }
     }catch(err){
       emailNote="Test email could not be sent: the test-email function did not respond. Check that the site is deployed on Netlify with the email function enabled.";
@@ -365,10 +353,11 @@
     $("conf-dandiya").textContent=(dandiya && pairs>=1)? pairs+" pairs · "+$("colour").value+" = "+money(t.dandiyaCost) : "$0.00";
     $("conf-total").textContent=money(t.total);
     // Pending manual payments must NOT be shown as confirmed.
-    // Card keeps the existing confirmed wording; Zelle/Venmo
-    // get a pending heading, intro, total label, banner text and
-    // a pending notice with code, amount, method and destination.
-    var isPending = paymentMethod!=="card";
+    // Card and Apple Pay (test) keep the existing confirmed
+    // wording; Zelle/Venmo get a pending heading, intro, total
+    // label, banner text and a pending notice with code, amount,
+    // method and destination.
+    var isPending = paymentMethod==="zelle" || paymentMethod==="venmo";
     $("conf-heading").textContent = isPending ? "Test registration pending" : "Test registration complete";
     $("conf-intro").textContent = isPending ? "This is a test registration. No money was charged by this page. Your ticket is pending until payment is received. Here is what your booking looks like:" : "This was a test payment, so no money was charged. Here is what your booking looks like:";
     $("conf-total-label").textContent = isPending ? "Total to send (test)" : "Total paid (test)";
@@ -376,7 +365,6 @@
     if(isPending){
       $("pendingNotice").hidden = false;
       $("pendingNotice").innerHTML = "Registration pending — please send "+money(t.total)+" via "+paymentMethodLabel()+" to "+destHTML(paymentDestination())+" and include your booking code "+ref+" as the memo. Your ticket will be confirmed after payment is received.";
-      bindCopyBtn($("pendingNotice"));
       var topThankyou=document.querySelector(".top-thankyou");
       if(topThankyou) topThankyou.textContent = "Thank you for registering! Your payment is pending.";
     } else {
