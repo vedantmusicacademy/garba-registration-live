@@ -29,6 +29,10 @@
   .row{display:flex;justify-content:space-between;margin:8px 0}
   .note{font-size:14px;color:#e8cfa0}
   #confirmation{display:none}
+  .success-banner{background:#1f7a4d;color:#fff;padding:14px 16px;border-radius:10px;font-weight:700;text-align:center;margin-bottom:16px}
+  .success-banner span{display:block;font-weight:400;font-size:14px;margin-top:4px}
+  main.confirmation-view{grid-template-columns:1fr;max-width:680px}
+  main.confirmation-view .order{margin-bottom:18px}
   footer{text-align:center;padding:20px;color:#e8cfa0}
   a{color:#ffd27a}
   @media(max-width:700px){main{grid-template-columns:1fr}}
@@ -129,6 +133,7 @@
   </form>
 
   <section class="box" id="confirmation" aria-live="polite">
+    <div id="emailSuccess" class="success-banner" hidden>✓ Email sent successfully<span>Confirmation emails were sent to the customer and to Vedant Music Academy.</span></div>
     <h2>Test registration complete</h2>
     <p>This was a test payment, so no money was charged. Here is what your booking looks like:</p>
     <div class="row"><span>Booking reference</span><strong id="conf-ref"></strong></div>
@@ -214,12 +219,12 @@
     // NOT included in the POST below.
     $("payBtn").disabled=true; $("payBtn").textContent="Processing test payment…";
     var payload={fullName:name, phone:phone, email:email, paidTickets:tickets, childrenUnder8:children, dandiya:dandiya, pairs:dandiya?pairs:0, colour:(dandiya && pairs>=1)?$("colour").value:""};
-    var t=totals(), ref="—", emailNote="Test email was not attempted.";
+    var t=totals(), ref="—", emailNote="Test email was not attempted.", emailOk=false;
     try{
       var res=await fetch("/.netlify/functions/send-test-email",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
       var data=await res.json().catch(function(){return {};});
       if(data.bookingReference) ref=data.bookingReference;
-      if(res.ok && data.ok){ emailNote="Test email sent: one to "+email+" and one to vedantmusicacademy@gmail.com."; }
+      if(res.ok && data.ok && data.customerEmailSent && data.adminEmailSent){ emailOk=true; emailNote="Test email sent: one to "+email+" and one to vedantmusicacademy@gmail.com."; }
       else { emailNote="Test email could not be sent: "+(data.error || "check the Netlify email settings and try again.")+" Customer sent: "+(data.customerEmailSent?"yes":"no")+", admin sent: "+(data.adminEmailSent?"yes":"no")+"."; }
     }catch(err){
       emailNote="Test email could not be sent: the test-email function did not respond. Check that the site is deployed on Netlify with the email function enabled.";
@@ -231,8 +236,16 @@
     $("conf-dandiya").textContent=(dandiya && pairs>=1)? pairs+" pairs · "+$("colour").value+" = "+money(t.dandiyaCost) : "$0.00";
     $("conf-total").textContent=money(t.total);
     $("emailStatus").textContent=emailNote;
+    $("emailSuccess").hidden=!emailOk;
     $("regForm").style.display="none";
     $("confirmation").style.display="block";
+    // Confirmation view only: single centred column. Move "Your order"
+    // below the confirmation box (same width, same contents/live updates).
+    // The form view is untouched: this runs only after a submission.
+    var mainEl=document.querySelector("main");
+    var orderEl=document.querySelector("aside.order");
+    if(mainEl) mainEl.classList.add("confirmation-view");
+    if(orderEl && $("confirmation").parentNode) $("confirmation").insertAdjacentElement("afterend", orderEl);
     window.scrollTo(0,0);
   };
   render();
