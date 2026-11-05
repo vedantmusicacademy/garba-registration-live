@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Owner: Confirm manual payment — Navratri Dhamaka (TEST)</title>
+<style>
+  body{font-family:Arial,Helvetica,sans-serif;background:#fff8ee;color:#2b1a0e;margin:0;padding:24px}
+  main{max-width:520px;margin:0 auto;background:#fff;border:1px solid #e8d9b8;padding:24px}
+  h1{font-size:22px;margin:0 0 8px}
+  p{font-size:14px;line-height:1.6}
+  label{display:block;font-weight:bold;margin-top:16px}
+  input{width:100%;box-sizing:border-box;padding:10px;font-size:16px;margin-top:6px;border:1px solid #ccc}
+  button{margin-top:20px;padding:12px 20px;font-size:16px;font-weight:bold;background:#2b1a0e;color:#f5c542;border:0;cursor:pointer}
+  button:disabled{opacity:.6}
+  #result{margin-top:20px;padding:14px;font-size:15px;line-height:1.6;display:none}
+  #result.ok{background:#e6f4ea;border:1px solid #2e7d32}
+  #result.err{background:#fdecea;border:1px solid #b3261e}
+</style>
+</head>
+<body>
+<main>
+  <h1>Owner: Confirm manual payment</h1>
+  <p><strong>TEST only.</strong> Use this page only after you have checked the Zelle or Venmo payment in your own bank or app. This page does not check payments itself.</p>
+  <p>Enter the booking code and your admin key. The admin key is the value you set as <code>ADMIN_CONFIRM_KEY</code> in Netlify. It is never shown, saved, or listed anywhere on this page.</p>
+  <label for="code">Booking code</label>
+  <input id="code" type="text" placeholder="VMA27-0008" autocomplete="off">
+  <label for="key">Admin key</label>
+  <input id="key" type="password" placeholder="Admin key" autocomplete="off">
+  <button id="confirmBtn" type="button">Confirm payment</button>
+  <div id="result" role="status"></div>
+  <p>This page does not list registrations. A registration that was already confirmed (card / Apple Pay test, or confirmed earlier) will be reported as already confirmed and no duplicate email will be sent.</p>
+</main>
+<script>
+(function () {
+  var btn = document.getElementById("confirmBtn");
+  var result = document.getElementById("result");
+  function show(msg, ok) {
+    result.style.display = "block";
+    result.className = ok ? "ok" : "err";
+    result.textContent = msg;
+  }
+  btn.addEventListener("click", async function () {
+    var code = document.getElementById("code").value.trim();
+    var adminKey = document.getElementById("key").value;
+    if (!code || !adminKey) {
+      show("Please fill in both the booking code and the admin key.", false);
+      return;
+    }
+    btn.disabled = true;
+    show("Checking…", true);
+    try {
+      var res = await fetch("/.netlify/functions/confirm-payment", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: code, adminKey: adminKey }),
+      });
+      var data = {};
+      try { data = await res.json(); } catch (e) { data = {}; }
+      if (res.ok && data.alreadyConfirmed) {
+        show("Already confirmed: " + (data.bookingReference || code) + ". No change was made and no duplicate email was sent.", true);
+      } else if (res.ok) {
+        show("Confirmed: " + (data.bookingReference || code) + ". The Sheet status is now TEST_CONFIRMED and the customer confirmation email was sent.", true);
+      } else {
+        show(data.error || ("Something went wrong (status " + res.status + "). No email was sent unless the message says the Sheet is confirmed."));
+      }
+    } catch (e) {
+      show("Could not reach the confirmation service. Nothing was changed.", false);
+    } finally {
+      btn.disabled = false;
+    }
+  });
+})();
+</script>
+</body>
+</html>
