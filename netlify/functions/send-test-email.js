@@ -13,7 +13,7 @@
 //        - paid tickets: $10 each for 1-9 tickets,
 //          $8 each for 10 or more tickets
 //        - children under 8: free ($0)
-//        - dandiya: $3 per pair, only when dandiya is Yes
+//        - dandiya: $5 per pair, only when dandiya is Yes
 //          and pairs is 1 or more; 0 pairs = $0, and no
 //          colour is required or shown for 0 pairs.
 //   3. Saves the registration to a Google Sheet FIRST, using
@@ -302,14 +302,14 @@ exports.handler = async (event) => {
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return { statusCode: 400, headers, body: JSON.stringify({ ok: false, error: "A valid email address is required." }) };
   }
-  if (!isIntInRange(paidTickets, 1, 100)) {
-    return { statusCode: 400, headers, body: JSON.stringify({ ok: false, error: "Paid tickets must be between 1 and 100." }) };
+  if (!isIntInRange(paidTickets, 1, 999)) {
+    return { statusCode: 400, headers, body: JSON.stringify({ ok: false, error: "Paid tickets must be between 1 and 999." }) };
   }
   if (!isIntInRange(childrenUnder8, 0, 100)) {
     return { statusCode: 400, headers, body: JSON.stringify({ ok: false, error: "Children under 8 must be between 0 and 100." }) };
   }
-  if (!isIntInRange(pairs, 0, 100)) {
-    return { statusCode: 400, headers, body: JSON.stringify({ ok: false, error: "Dandiya pairs must be between 0 and 100." }) };
+  if (!isIntInRange(pairs, 0, 999)) {
+    return { statusCode: 400, headers, body: JSON.stringify({ ok: false, error: "Dandiya pairs must be between 0 and 999." }) };
   }
   if (!dandiya && pairs !== 0) {
     return { statusCode: 400, headers, body: JSON.stringify({ ok: false, error: "Dandiya pairs must be 0 when dandiya is No." }) };
@@ -321,7 +321,7 @@ exports.handler = async (event) => {
   // Server-side recomputation. The browser total is never used.
   const unitPrice = paidTickets >= 10 ? 8 : 10;
   const ticketCost = paidTickets * unitPrice;
-  const dandiyaCost = dandiya && pairs >= 1 ? pairs * 3 : 0;
+  const dandiyaCost = dandiya && pairs >= 1 ? pairs * 5 : 0;
   const total = ticketCost + dandiyaCost;
 
   const gmailUser = process.env.GMAIL_USER;
