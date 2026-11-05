@@ -10,3 +10,16 @@
 
 [build.environment]
   NODE_VERSION = "20"
+
+# Scheduled Function: check-paid runs every 10 minutes (UTC).
+# It scans Sheet1 column Q ("Paid") for pending Zelle/Venmo rows the
+# owner marked Yes, sends the confirmed [TEST] email once, and only
+# then flips Payment Status (col K) to TEST_CONFIRMED. The function
+# file uses the Netlify v2 default-export style, as in the Netlify
+# Scheduled Functions docs; the schedule lives here in netlify.toml.
+# Scheduled functions run only on published deploys, cannot be
+# invoked directly by URL in production, and have a 30 second limit.
+# For a manual test, use the "Run now" button on the Functions page
+# in the Netlify UI.
+[functions."check-paid"]
+  schedule = "*/10 * * * *"
