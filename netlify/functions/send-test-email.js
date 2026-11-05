@@ -7,12 +7,12 @@
 //
 // What it does, on a POST from the test registration form:
 //   1. Validates name, phone, email, paid tickets, children
-//      under 8, dandiya Yes/No, pairs, and colour.
+//      under 10, dandiya Yes/No, pairs, and colour.
 //   2. Recomputes the total on the server, never trusting
 //      a total sent by the browser:
 //        - paid tickets: $10 each for 1-9 tickets,
 //          $8 each for 10 or more tickets
-//        - children under 8: free ($0)
+//        - children under 10: free ($0)
 //        - dandiya: $5 per pair, only when dandiya is Yes
 //          and pairs is 1 or more; 0 pairs = $0, and no
 //          colour is required or shown for 0 pairs.
@@ -97,7 +97,7 @@ function buildEmailBody(data, ref, total, ticketCost, dandiyaCost, isAdmin) {
     `Phone: ${data.phone}\n` +
     `Email: ${data.email}\n` +
     `Paid tickets: ${data.paidTickets}\n` +
-    `Children under 8 (free): ${data.childrenUnder8}\n` +
+    `Children under 10 (free): ${data.childrenUnder8}\n` +
     `Dandiya required: ${dandiyaNeeded}\n` +
     `Dandiya pairs: ${dandiyaPairs}\n` +
     (hasDandiya ? `Dandiya colour: ${colourValue}\n` : ``) + `\n` +
@@ -135,7 +135,7 @@ function buildEmailBody(data, ref, total, ticketCost, dandiyaCost, isAdmin) {
     `<div style="font-size:14px;line-height:1.7;color:#2b1a0e;margin-top:10px;">` +
     `Paid tickets: ${data.paidTickets} × ${data.paidTickets >= 10 ? "$8.00" : "$10.00"} = ${e(money(ticketCost))}<br>` +
     `Dandiya cost: ${e(money(dandiyaCost))}<br>` +
-    `Children under 8: free` +
+    `Children under 10: free` +
     `</div></td></tr></table>` +
     // 4. Separate event/address box.
     `<table width="100%" cellpadding="0" cellspacing="0" style="background-color:#fdf6ec;border:1px solid #e8d9b8;margin-top:16px;">` +
@@ -155,7 +155,7 @@ function buildEmailBody(data, ref, total, ticketCost, dandiyaCost, isAdmin) {
     `<tr><td style="border-bottom:1px solid #eee0c8;color:#7a4a00;">Phone</td><td style="border-bottom:1px solid #eee0c8;">${e(data.phone)}</td></tr>` +
     `<tr><td style="border-bottom:1px solid #eee0c8;color:#7a4a00;">Email</td><td style="border-bottom:1px solid #eee0c8;">${e(data.email)}</td></tr>` +
     `<tr><td style="border-bottom:1px solid #eee0c8;color:#7a4a00;">Paid tickets</td><td style="border-bottom:1px solid #eee0c8;">${data.paidTickets}</td></tr>` +
-    `<tr><td style="border-bottom:1px solid #eee0c8;color:#7a4a00;">Children under 8 (free)</td><td style="border-bottom:1px solid #eee0c8;">${data.childrenUnder8}</td></tr>` +
+    `<tr><td style="border-bottom:1px solid #eee0c8;color:#7a4a00;">Children under 10 (free)</td><td style="border-bottom:1px solid #eee0c8;">${data.childrenUnder8}</td></tr>` +
     `<tr><td style="border-bottom:1px solid #eee0c8;color:#7a4a00;">Dandiya required</td><td style="border-bottom:1px solid #eee0c8;">${e(dandiyaNeeded)}</td></tr>` +
     `<tr><td style="border-bottom:1px solid #eee0c8;color:#7a4a00;">Dandiya pairs</td><td style="border-bottom:1px solid #eee0c8;">${e(dandiyaPairs)}</td></tr>` +
     (hasDandiya
@@ -306,7 +306,7 @@ exports.handler = async (event) => {
     return { statusCode: 400, headers, body: JSON.stringify({ ok: false, error: "Paid tickets must be between 1 and 999." }) };
   }
   if (!isIntInRange(childrenUnder8, 0, 100)) {
-    return { statusCode: 400, headers, body: JSON.stringify({ ok: false, error: "Children under 8 must be between 0 and 100." }) };
+    return { statusCode: 400, headers, body: JSON.stringify({ ok: false, error: "Children under 10 must be between 0 and 100." }) };
   }
   if (!isIntInRange(pairs, 0, 999)) {
     return { statusCode: 400, headers, body: JSON.stringify({ ok: false, error: "Dandiya pairs must be between 0 and 999." }) };
