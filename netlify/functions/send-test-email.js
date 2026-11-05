@@ -246,6 +246,15 @@ async function appendSheetRow(data, total, ticketCost, dandiyaCost) {
   const next = dataRows + 1;
   const ref = "VMA27-" + String(next).padStart(4, "0");
   const hasDandiya = data.dandiya && data.pairs >= 1;
+  // Row order (15 columns): the existing 13 columns unchanged,
+  // then the two new amount columns appended at the end so
+  // existing Sheet data is not shifted: Registration Code,
+  // Date, Full Name, Phone, Email, Adult Tickets, Children
+  // (count), Dandiya Required, Dandiya Color, Amount Paid
+  // (total), Payment Status, Transaction ID, QR Code URL
+  // (empty), Ticket Amount, Dandiya Amount. Ticket Amount and
+  // Dandiya Amount are the two parts of the total, so they
+  // always sum to it.
   const row = [
     ref,
     chicagoDate(),
@@ -260,10 +269,12 @@ async function appendSheetRow(data, total, ticketCost, dandiyaCost) {
     "TEST",
     "TEST",
     "",
+    ticketCost,
+    dandiyaCost,
   ];
   await sheets.spreadsheets.values.append({
     spreadsheetId,
-    range: "Sheet1!A:M",
+    range: "Sheet1!A:O",
     valueInputOption: "USER_ENTERED",
     requestBody: { values: [row] },
   });
