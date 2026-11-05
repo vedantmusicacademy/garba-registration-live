@@ -31,8 +31,9 @@
   .order{background:#2b1d18;border:1px solid #6b4a2f;border-radius:12px;padding:18px;height:auto;align-self:stretch}
   .row{display:flex;justify-content:space-between;margin:8px 0}
   .note{font-size:14px;color:#e8cfa0}
-  .pricing{text-align:center}
-  .pricing-free{display:block;margin-top:10px}
+  .pricing-lines{text-align:center}
+  .pricing-lines span{display:block;margin:8px 0}
+  .free-line{display:block;text-align:center;margin-top:6px}
   .dandiya-price{font-size:18px;font-weight:700;text-align:center}
   .order-note{text-align:center;margin-top:18px}
   #confirmation{display:none}
@@ -97,13 +98,13 @@
         <input id="t-count" type="number" inputmode="numeric" value="1" min="1" max="999" aria-label="Paid tickets">
         <button type="button" id="t-plus" aria-label="One more paid ticket">+</button>
       </div>
-      <label>Children under 8 (free)</label>
+      <label>Children under 10 <span class="free-line">(free)</span></label>
       <div class="stepper">
         <button type="button" id="c-minus" aria-label="One fewer child">−</button>
         <output id="c-count">0</output>
         <button type="button" id="c-plus" aria-label="One more child">+</button>
       </div>
-      <p class="pricing">$10 per ticket · $8 per ticket for 10 or more tickets <span class="pricing-free">Free for children under 8</span></p>
+      <p class="pricing-lines"><span>$10 per ticket</span><span>Group ticket discount available when you buy 10 or more</span><span>$8 per ticket</span></p>
     </section>
     </div>
 
@@ -137,7 +138,7 @@
 <aside class="order" aria-labelledby="h-order">
       <h2 id="h-order">Your order</h2>
       <div class="row"><span>Tickets</span><span id="sum-tickets"></span></div>
-      <div class="row"><span>Children under 8</span><span id="sum-children"></span></div>
+      <div class="row"><span>Children under 10</span><span id="sum-children"></span></div>
       <div class="row" id="sum-dandiya-row"><span>Dandiya</span><span id="sum-dandiya"></span></div>
       <div class="row"><strong>Total</strong><strong id="sum-total"></strong></div>
       <p class="note order-note">Total updates live. Server recomputes the same total before any test email is sent from Gmail (Vedant Music Academy).</p>
@@ -168,7 +169,7 @@
     <div class="row"><span>Booking reference</span><strong id="conf-ref"></strong></div>
     <div class="row"><span>Name</span><strong id="conf-name"></strong></div>
     <div class="row"><span>Paid tickets</span><strong id="conf-tickets"></strong></div>
-    <div class="row"><span>Children under 8 (free)</span><strong id="conf-children"></strong></div>
+    <div class="row"><span>Children under 10 (free)</span><strong id="conf-children"></strong></div>
     <div class="row"><span>Dandiya</span><strong id="conf-dandiya"></strong></div>
     <div class="row"><span>Total paid (test)</span><strong id="conf-total"></strong></div>
     <p id="emailStatus" class="note"></p>
