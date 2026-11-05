@@ -29,6 +29,7 @@
   button.pay{width:100%;padding:14px;font-size:17px;font-weight:700;border:0;border-radius:10px;background:#d9a441;cursor:pointer}
   button.pay:disabled{opacity:.6}
   .order{background:#2b1d18;border:1px solid #6b4a2f;border-radius:12px;padding:18px;height:auto;align-self:stretch}
+  .order h2{text-align:center}
   .row{display:flex;justify-content:space-between;margin:8px 0}
   .note{font-size:14px;color:#e8cfa0}
   .pricing-lines{text-align:center}
@@ -137,7 +138,7 @@
 <aside class="order" aria-labelledby="h-order">
       <h2 id="h-order">Your order</h2>
       <div class="row"><span>Tickets</span><span id="sum-tickets"></span></div>
-      <div class="row"><span>Children under 10</span><span id="sum-children"></span></div>
+      <div class="row" id="sum-children-row"><span>Children under 10</span><span id="sum-children"></span></div>
       <div class="row" id="sum-dandiya-row"><span>Dandiya</span><span id="sum-dandiya"></span></div>
       <div class="row"><strong>Total</strong><strong id="sum-total"></strong></div>
       <p class="note order-note">Total updates live. Server recomputes the same total before any test email is sent from Gmail (Vedant Music Academy).</p>
@@ -201,6 +202,10 @@
     var t=totals();
     $("sum-tickets").textContent = tickets+" × "+money(t.unit)+" = "+money(t.ticketCost);
     $("sum-children").textContent = children;
+    // Your order live summary only: hide the children row when the
+    // count is 0, show it when it is 1 or more. The confirmation
+    // box's children row is untouched by this rule.
+    $("sum-children-row").style.display = children>=1 ? "flex" : "none";
     $("sum-dandiya").textContent = (dandiya && pairs>=1) ? pairs+" pair"+(pairs===1?"":"s")+" · "+$("colour").value+" = "+money(t.dandiyaCost) : "$0.00";
     $("sum-dandiya-row").style.display = (dandiya && pairs>=1) ? "flex" : "none";
     $("sum-total").textContent = money(t.total);
