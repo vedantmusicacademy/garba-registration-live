@@ -7,7 +7,12 @@
 //
 // What it does, on a POST from the test registration form:
 //   1. Validates name, phone, email, paid tickets, children
-//      under 10, dandiya Yes/No, pairs, and colour.
+//      under 10, dandiya Yes/No, pairs, colour, and payment
+//      method (card, zelle, or venmo; card is the default).
+//      Zelle/Venmo are manual and stay pending: this function
+//      cannot verify them automatically, so their Payment
+//      Status is TEST_PENDING_ZELLE / TEST_PENDING_VENMO and
+//      their emails say PENDING, not confirmed.
 //   2. Recomputes the total on the server, never trusting
 //      a total sent by the browser:
 //        - paid tickets: $10 each for 1-9 tickets,
@@ -45,6 +50,8 @@ const nodemailer = require("nodemailer");
 const { google } = require("googleapis");
 
 const ADMIN_EMAIL = "vedantmusicacademy@gmail.com";
+const ZELLE_DESTINATION = "vedantmusicacademy@gmail.com";
+const VENMO_DESTINATION = "@vedantmusicacademy";
 const FROM = "Vedant Music Academy <vedantmusicacademy@gmail.com>";
 const DIRECTIONS_URL = "https://share.google/YKFk7R0pjMEO3x2Gk";
 const EVENT_LINE = "Friday, October 15, 2027 · 7:00–11:00 PM · Bartlett Park District, 700 S Bartlett Rd, Bartlett, IL 60103";
@@ -66,25 +73,52 @@ function isIntInRange(v, min, max) {
   return Number.isInteger(v) && v >= min && v <= max;
 }
 
-function buildEmailBody(data, ref, total, ticketCost, dandiyaCost, isAdmin) {
+function paymentMethodLabel(method) {
+  return method === "zelle" ? "Zelle" : method === "venmo" ? "Venmo" : "Card";
+}
+function paymentDestination(method) {
+  return method === "zelle" ? ZELLE_DESTINATION : method === "venmo" ? VENMO_DESTINATION : "";
+}
+
+function buildEmailBody(data, ref, total, ticketCost, dandiyaCost, isAdmin, paymentMethod) {
+  const method = paymentMethod || "card";
+  const isPending = method !== "card";
   const hasDandiya = data.dandiya && data.pairs >= 1;
   const dandiyaNeeded = data.dandiya ? "Yes" : "No";
   const dandiyaPairs = hasDandiya
     ? `${data.pairs} pair${data.pairs === 1 ? "" : "s"}`
     : "0 pairs";
   const colourValue = hasDandiya ? data.colour : "—";
-  const heading = isAdmin
-    ? "New TEST registration — Navratri Dhamaka"
-    : "Your TEST ticket confirmation — Navratri Dhamaka";
-  const intro = isAdmin
-    ? "A new test registration was submitted. This is a TEST registration. No money was charged."
-    : "Thank you for registering. This is a TEST registration. No money was charged.";
+  const heading = isPending
+    ? (isAdmin
+      ? "New TEST registration — Payment pending — Navratri Dhamaka"
+      : "Your TEST registration — Payment pending — Navratri Dhamaka")
+    : (isAdmin
+      ? "New TEST registration — Navratri Dhamaka"
+      : "Your TEST ticket confirmation — Navratri Dhamaka");
+  const intro = isPending
+    ? (isAdmin
+      ? "A new test registration was submitted with a pending manual payment. This is a TEST registration. No money was charged by this page. The ticket is NOT confirmed until payment is received."
+      : "Thank you for registering. Your payment is pending. This is a TEST registration. No money was charged by this page. Your ticket will be confirmed only after payment is received.")
+    : (isAdmin
+      ? "A new test registration was submitted. This is a TEST registration. No money was charged."
+      : "Thank you for registering. This is a TEST registration. No money was charged.");
+  const pendingText = isPending
+    ? `Payment method: ${paymentMethodLabel(method)}\n` +
+      `Amount to send (test): ${money(total)}\n` +
+      `Send to: ${paymentDestination(method)}\n` +
+      `Memo: please include your booking code ${ref}\n` +
+      `Status: PENDING — your ticket will be confirmed only after payment is received. Zelle and Venmo payments cannot be verified automatically by this system.\n\n`
+    : ``;
   // Plain-text fallback: same facts, same order, no styling.
+  // Card emails are unchanged. Pending emails use the amount-to-send
+  // wording and add the pending payment block below.
   const text =
     `${heading}\n` +
     `${intro}\n\n` +
     `Booking reference: ${ref}\n` +
-    `Amount paid (test): ${money(total)}\n` +
+    (isPending ? `Amount to send (test): ${money(total)}\n` : `Amount paid (test): ${money(total)}\n`) +
+    pendingText +
     `Paid tickets: ${data.paidTickets} × ${data.paidTickets >= 10 ? "$8.00" : "$10.00"} = ${money(ticketCost)}\n` +
     `Dandiya cost: ${money(dandiyaCost)}\n\n` +
     `Event: Navratri Dhamaka\n` +
@@ -130,13 +164,26 @@ function buildEmailBody(data, ref, total, ticketCost, dandiyaCost, isAdmin) {
     // 3. Separate total box with breakdown.
     `<table width="100%" cellpadding="0" cellspacing="0" style="background-color:#ffedd6;border:1px solid #e67e22;margin-top:16px;">` +
     `<tr><td style="padding:20px;">` +
-    `<div style="font-size:13px;letter-spacing:2px;color:#7a3c00;font-weight:bold;">AMOUNT PAID (TEST)</div>` +
+    `<div style="font-size:13px;letter-spacing:2px;color:#7a3c00;font-weight:bold;">${isPending ? "AMOUNT TO SEND (TEST)" : "AMOUNT PAID (TEST)"}</div>` +
     `<div style="font-family:Georgia,serif;font-size:36px;line-height:1.2;color:#2b1a0e;font-weight:bold;margin-top:6px;">${e(money(total))}</div>` +
     `<div style="font-size:14px;line-height:1.7;color:#2b1a0e;margin-top:10px;">` +
     `Paid tickets: ${data.paidTickets} × ${data.paidTickets >= 10 ? "$8.00" : "$10.00"} = ${e(money(ticketCost))}<br>` +
     `Dandiya cost: ${e(money(dandiyaCost))}<br>` +
     `Children under 10: free` +
     `</div></td></tr></table>` +
+    // Pending manual-payment box: card emails do not get this box.
+    (isPending
+      ? `<table width="100%" cellpadding="0" cellspacing="0" style="background-color:#fff3d6;border:2px solid #f5c542;margin-top:16px;">` +
+        `<tr><td style="padding:20px;">` +
+        `<div style="font-size:13px;letter-spacing:2px;color:#7a4a00;font-weight:bold;">PAYMENT PENDING</div>` +
+        `<div style="font-size:15px;line-height:1.8;color:#2b1a0e;margin-top:10px;">` +
+        `<strong>Payment method:</strong> ${e(paymentMethodLabel(method))}<br>` +
+        `<strong>Amount to send (test):</strong> ${e(money(total))}<br>` +
+        `<strong>Send to:</strong> ${e(paymentDestination(method))}<br>` +
+        `<strong>Memo:</strong> please include your booking code ${e(ref)}<br>` +
+        `Your ticket will be confirmed only after payment is received. Zelle and Venmo payments cannot be verified automatically by this system.` +
+        `</div></td></tr></table>`
+      : ``) +
     // 4. Separate event/address box.
     `<table width="100%" cellpadding="0" cellspacing="0" style="background-color:#fdf6ec;border:1px solid #e8d9b8;margin-top:16px;">` +
     `<tr><td style="padding:20px;">` +
@@ -211,7 +258,7 @@ function chicagoDate() {
 // and collide, and an email failure after a successful append
 // leaves a gap in the sequence. For the expected low volume
 // this is acceptable.
-async function appendSheetRow(data, total, ticketCost, dandiyaCost) {
+async function appendSheetRow(data, total, ticketCost, dandiyaCost, paymentMethod, paymentStatus) {
   let creds;
   try {
     creds = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_JSON || "");
@@ -246,15 +293,16 @@ async function appendSheetRow(data, total, ticketCost, dandiyaCost) {
   const next = dataRows + 1;
   const ref = "VMA27-" + String(next).padStart(4, "0");
   const hasDandiya = data.dandiya && data.pairs >= 1;
-  // Row order (15 columns): the existing 13 columns unchanged,
-  // then the two new amount columns appended at the end so
-  // existing Sheet data is not shifted: Registration Code,
-  // Date, Full Name, Phone, Email, Adult Tickets, Children
-  // (count), Dandiya Required, Dandiya Color, Amount Paid
-  // (total), Payment Status, Transaction ID, QR Code URL
-  // (empty), Ticket Amount, Dandiya Amount. Ticket Amount and
-  // Dandiya Amount are the two parts of the total, so they
-  // always sum to it.
+  // Row order (16 columns): the existing 15 columns unchanged,
+  // then Payment Method appended at the end so existing Sheet
+  // data is not shifted: Registration Code, Date, Full Name,
+  // Phone, Email, Adult Tickets, Children (count), Dandiya
+  // Required, Dandiya Color, Amount Paid (total), Payment
+  // Status, Transaction ID, QR Code URL (empty), Ticket Amount,
+  // Dandiya Amount, Payment Method. Ticket Amount and Dandiya
+  // Amount are the two parts of the total, so they always sum
+  // to it. Payment Status is TEST for card, TEST_PENDING_ZELLE
+  // for Zelle, and TEST_PENDING_VENMO for Venmo.
   const row = [
     ref,
     chicagoDate(),
@@ -266,15 +314,16 @@ async function appendSheetRow(data, total, ticketCost, dandiyaCost) {
     data.dandiya ? "Yes" : "No",
     hasDandiya ? data.colour : "",
     total,
-    "TEST",
+    paymentStatus,
     "TEST",
     "",
     ticketCost,
     dandiyaCost,
+    paymentMethod,
   ];
   await sheets.spreadsheets.values.append({
     spreadsheetId,
-    range: "Sheet1!A:O",
+    range: "Sheet1!A:P",
     valueInputOption: "USER_ENTERED",
     requestBody: { values: [row] },
   });
@@ -303,6 +352,15 @@ exports.handler = async (event) => {
   const dandiya = body.dandiya === true;
   const pairs = body.pairs;
   const colour = typeof body.colour === "string" ? body.colour.trim() : "";
+  // Payment method: card is the default for the old page, which
+  // sends no paymentMethod. Unknown values are rejected. No
+  // real payment verification is added for Zelle/Venmo: those
+  // registrations stay pending until the owner confirms manually.
+  const paymentMethod = body.paymentMethod === undefined || body.paymentMethod === null ? "card" : body.paymentMethod;
+  if (paymentMethod !== "card" && paymentMethod !== "zelle" && paymentMethod !== "venmo") {
+    return { statusCode: 400, headers, body: JSON.stringify({ ok: false, error: "Unknown payment method." }) };
+  }
+  const paymentStatus = paymentMethod === "card" ? "TEST" : paymentMethod === "zelle" ? "TEST_PENDING_ZELLE" : "TEST_PENDING_VENMO";
 
   if (!fullName) {
     return { statusCode: 400, headers, body: JSON.stringify({ ok: false, error: "Full name is required." }) };
@@ -342,14 +400,15 @@ exports.handler = async (event) => {
     return { statusCode: 500, headers, body: JSON.stringify({ ok: false, error: "Email service is not configured." }) };
   }
 
-  const data = { fullName, phone, email, paidTickets, childrenUnder8, dandiya, pairs, colour };
+  const data = { fullName, phone, email, paidTickets, childrenUnder8, dandiya, pairs, colour, paymentMethod, paymentStatus };
 
   // Sheet FIRST, with the sequential VMA27 code. If this fails,
   // no email is sent, so no registration is confirmed without
-  // a Sheet row.
+  // a Sheet row. For pending manual payments this row is still
+  // saved first, with its pending status, not a confirmation.
   let ref;
   try {
-    ref = await appendSheetRow(data, total, ticketCost, dandiyaCost);
+    ref = await appendSheetRow(data, total, ticketCost, dandiyaCost, paymentMethod, paymentStatus);
   } catch {
     // Generic message only: do not leak Sheet/API error details.
     return {
@@ -370,11 +429,17 @@ exports.handler = async (event) => {
     secure: true,
     auth: { user: gmailUser, pass: gmailAppPassword },
   });
-  const customerBody = buildEmailBody(data, ref, total, ticketCost, dandiyaCost, false);
-  const adminBody = buildEmailBody(data, ref, total, ticketCost, dandiyaCost, true);
+  const customerBody = buildEmailBody(data, ref, total, ticketCost, dandiyaCost, false, paymentMethod);
+  const adminBody = buildEmailBody(data, ref, total, ticketCost, dandiyaCost, true, paymentMethod);
 
-  const customerSent = await sendViaGmail(transporter, email, `[TEST] You are registered! Navratri Dhamaka — Oct 15, 2027 (${ref})`, customerBody);
-  const adminSent = await sendViaGmail(transporter, ADMIN_EMAIL, `[TEST] New registration — Navratri Dhamaka (${ref})`, adminBody);
+  const customerSubject = paymentMethod === "card"
+    ? `[TEST] You are registered! Navratri Dhamaka — Oct 15, 2027 (${ref})`
+    : `[TEST] Payment pending — Navratri Dhamaka — Oct 15, 2027 (${ref})`;
+  const adminSubject = paymentMethod === "card"
+    ? `[TEST] New registration — Navratri Dhamaka (${ref})`
+    : `[TEST] Payment pending — New registration — Navratri Dhamaka (${ref})`;
+  const customerSent = await sendViaGmail(transporter, email, customerSubject, customerBody);
+  const adminSent = await sendViaGmail(transporter, ADMIN_EMAIL, adminSubject, adminBody);
 
   if (!customerSent || !adminSent) {
     return {
@@ -394,6 +459,6 @@ exports.handler = async (event) => {
   return {
     statusCode: 200,
     headers,
-    body: JSON.stringify({ ok: true, bookingReference: ref, total, customerEmailSent: true, adminEmailSent: true }),
+    body: JSON.stringify({ ok: true, bookingReference: ref, total, paymentMethod, paymentStatus, customerEmailSent: true, adminEmailSent: true }),
   };
 };
