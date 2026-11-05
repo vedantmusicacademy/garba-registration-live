@@ -8,11 +8,16 @@
 // What it does, on a POST from the test registration form:
 //   1. Validates name, phone, email, paid tickets, children
 //      under 10, dandiya Yes/No, pairs, colour, and payment
-//      method (card, zelle, or venmo; card is the default).
-//      Zelle/Venmo are manual and stay pending: this function
-//      cannot verify them automatically, so their Payment
-//      Status is TEST_PENDING_ZELLE / TEST_PENDING_VENMO and
-//      their emails say PENDING, not confirmed.
+//      method (card, zelle, venmo, or apple_pay; card is the
+//      default). Zelle/Venmo are manual and stay pending: this
+//      function cannot verify them automatically, so their
+//      Payment Status is TEST_PENDING_ZELLE / TEST_PENDING_VENMO
+//      and their emails say PENDING, not confirmed. Apple Pay
+//      here is a TEST simulation like the test card (no real
+//      Apple Pay sheet, no real money, no wallet details sent),
+//      so its Payment Status is TEST and its emails are the
+//      confirmed test emails. Real Apple Pay needs live Stripe
+//      plus Apple Pay domain/merchant setup, which is NOT here.
 //   2. Recomputes the total on the server, never trusting
 //      a total sent by the browser:
 //        - paid tickets: $10 each for 1-9 tickets,
@@ -74,7 +79,7 @@ function isIntInRange(v, min, max) {
 }
 
 function paymentMethodLabel(method) {
-  return method === "zelle" ? "Zelle" : method === "venmo" ? "Venmo" : "Card";
+  return method === "zelle" ? "Zelle" : method === "venmo" ? "Venmo" : method === "apple_pay" ? "Apple Pay" : "Card";
 }
 function paymentDestination(method) {
   return method === "zelle" ? ZELLE_DESTINATION : method === "venmo" ? VENMO_DESTINATION : "";
@@ -82,7 +87,7 @@ function paymentDestination(method) {
 
 function buildEmailBody(data, ref, total, ticketCost, dandiyaCost, isAdmin, paymentMethod) {
   const method = paymentMethod || "card";
-  const isPending = method !== "card";
+  const isPending = method === "zelle" || method === "venmo";
   const hasDandiya = data.dandiya && data.pairs >= 1;
   const dandiyaNeeded = data.dandiya ? "Yes" : "No";
   const dandiyaPairs = hasDandiya
@@ -117,6 +122,7 @@ function buildEmailBody(data, ref, total, ticketCost, dandiyaCost, isAdmin, paym
     `${heading}\n` +
     `${intro}\n\n` +
     `Booking reference: ${ref}\n` +
+    (method === "apple_pay" ? `Payment method: Apple Pay (Test)\n` : ``) +
     (isPending ? `Amount to send (test): ${money(total)}\n` : `Amount paid (test): ${money(total)}\n`) +
     pendingText +
     `Paid tickets: ${data.paidTickets} × ${data.paidTickets >= 10 ? "$8.00" : "$10.00"} = ${money(ticketCost)}\n` +
@@ -207,6 +213,9 @@ function buildEmailBody(data, ref, total, ticketCost, dandiyaCost, isAdmin, paym
     `<tr><td style="border-bottom:1px solid #eee0c8;color:#7a4a00;">Dandiya pairs</td><td style="border-bottom:1px solid #eee0c8;">${e(dandiyaPairs)}</td></tr>` +
     (hasDandiya
       ? `<tr><td style="border-bottom:1px solid #eee0c8;color:#7a4a00;">Dandiya colour</td><td style="border-bottom:1px solid #eee0c8;">${e(data.colour)}</td></tr>`
+      : ``) +
+    (method === "apple_pay"
+      ? `<tr><td style="border-bottom:1px solid #eee0c8;color:#7a4a00;">Payment method</td><td style="border-bottom:1px solid #eee0c8;">Apple Pay (Test)</td></tr>`
       : ``) +
     `<tr><td style="color:#7a4a00;">Dandiya cost</td><td>${e(money(dandiyaCost))}</td></tr>` +
     `</table>` +
@@ -301,8 +310,9 @@ async function appendSheetRow(data, total, ticketCost, dandiyaCost, paymentMetho
   // Status, Transaction ID, QR Code URL (empty), Ticket Amount,
   // Dandiya Amount, Payment Method. Ticket Amount and Dandiya
   // Amount are the two parts of the total, so they always sum
-  // to it. Payment Status is TEST for card, TEST_PENDING_ZELLE
-  // for Zelle, and TEST_PENDING_VENMO for Venmo.
+  // to it. Payment Status is TEST for card and apple_pay,
+  // TEST_PENDING_ZELLE for Zelle, and TEST_PENDING_VENMO
+  // for Venmo.
   const row = [
     ref,
     chicagoDate(),
@@ -356,11 +366,13 @@ exports.handler = async (event) => {
   // sends no paymentMethod. Unknown values are rejected. No
   // real payment verification is added for Zelle/Venmo: those
   // registrations stay pending until the owner confirms manually.
+  // Apple Pay is a test simulation only (see header): no real
+  // Apple Pay charge, so its status is TEST like card.
   const paymentMethod = body.paymentMethod === undefined || body.paymentMethod === null ? "card" : body.paymentMethod;
-  if (paymentMethod !== "card" && paymentMethod !== "zelle" && paymentMethod !== "venmo") {
+  if (paymentMethod !== "card" && paymentMethod !== "zelle" && paymentMethod !== "venmo" && paymentMethod !== "apple_pay") {
     return { statusCode: 400, headers, body: JSON.stringify({ ok: false, error: "Unknown payment method." }) };
   }
-  const paymentStatus = paymentMethod === "card" ? "TEST" : paymentMethod === "zelle" ? "TEST_PENDING_ZELLE" : "TEST_PENDING_VENMO";
+  const paymentStatus = paymentMethod === "card" || paymentMethod === "apple_pay" ? "TEST" : paymentMethod === "zelle" ? "TEST_PENDING_ZELLE" : "TEST_PENDING_VENMO";
 
   if (!fullName) {
     return { statusCode: 400, headers, body: JSON.stringify({ ok: false, error: "Full name is required." }) };
@@ -432,10 +444,10 @@ exports.handler = async (event) => {
   const customerBody = buildEmailBody(data, ref, total, ticketCost, dandiyaCost, false, paymentMethod);
   const adminBody = buildEmailBody(data, ref, total, ticketCost, dandiyaCost, true, paymentMethod);
 
-  const customerSubject = paymentMethod === "card"
+  const customerSubject = paymentMethod === "card" || paymentMethod === "apple_pay"
     ? `[TEST] You are registered! Navratri Dhamaka — Oct 15, 2027 (${ref})`
     : `[TEST] Payment pending — Navratri Dhamaka — Oct 15, 2027 (${ref})`;
-  const adminSubject = paymentMethod === "card"
+  const adminSubject = paymentMethod === "card" || paymentMethod === "apple_pay"
     ? `[TEST] New registration — Navratri Dhamaka (${ref})`
     : `[TEST] Payment pending — New registration — Navratri Dhamaka (${ref})`;
   const customerSent = await sendViaGmail(transporter, email, customerSubject, customerBody);
