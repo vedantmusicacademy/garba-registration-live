@@ -12,7 +12,19 @@
   header h1{margin:8px 0;font-size:42px}
   .pills{text-align:center;padding:8px 16px 20px}
   .pill{display:inline-block;border:1px solid #d9a441;border-radius:999px;padding:6px 12px;margin:4px}
-  main{max-width:980px;margin:0 auto;padding:0 16px 40px}
+  main{max-width:1280px;margin:0 auto;padding:0 16px 40px}
+  /* Deity images flanking the form: Radha Krishna on the left,
+     Ambaji Mata on the right. Desktop: sticky side columns, form
+     stays about 900px wide in the middle. Phone: the two images sit
+     side by side above the form, cropped short so the form stays
+     easy to read. In confirmation view the images are hidden. */
+  .form-wrap{display:grid;grid-template-columns:170px minmax(0,1fr) 170px;gap:18px;align-items:start}
+  .deity{margin:0;position:sticky;top:16px}
+  .deity img{width:100%;height:auto;display:block;border-radius:12px;border:3px solid #d9a441}
+  .deity figcaption{text-align:center;font-size:13px;font-weight:700;color:#e8cfa0;margin-top:6px}
+  body.confirmation-view .deity{display:none}
+  body.confirmation-view .form-wrap{display:block}
+  @media(max-width:900px){.form-wrap{grid-template-columns:1fr 1fr}.form-wrap form{grid-column:1/-1;grid-row:2}.deity{position:static}.deity img{height:170px;object-fit:cover;object-position:top}}
   .two-col{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:stretch}
   .two-col .order{margin-bottom:18px}
   .box{background:#2b1d18;border:1px solid #6b4a2f;border-radius:12px;padding:18px;margin-bottom:18px}
@@ -90,6 +102,8 @@
   <h2 class="reg-heading" style="text-align:center">Register for Garba Night</h2>
   <p class="reg-subtitle" style="text-align:center">Fill in your details, choose your tickets, and choose a payment method. Your total updates as you go.</p>
 
+  <div class="form-wrap">
+  <figure class="deity"><img src="images/radha-krishna.jpg" alt="Shri Radha Krishna" loading="lazy"><figcaption>Shri Radha Krishna</figcaption></figure>
   <form id="regForm" novalidate>
     <!-- Top row: Your details + Tickets, equal width -->
     <div class="two-col">
@@ -185,6 +199,8 @@
       <button type="submit" class="pay" id="payBtn">Pay $10.00 (Test)</button>
     </section>
   </form>
+  <figure class="deity"><img src="images/ambaji.jpg" alt="Ambaji Mata" loading="lazy"><figcaption>Ambaji Mata</figcaption></figure>
+  </div>
 
   <section class="box" id="confirmation" aria-live="polite">
     <div id="emailSuccess" class="success-banner" hidden>✓ Email sent successfully<span id="emailSuccessText">Confirmation emails were sent to the customer and to Vedant Music Academy.</span></div>
