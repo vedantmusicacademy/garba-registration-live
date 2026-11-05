@@ -35,7 +35,8 @@
   main.confirmation-view .order{margin-bottom:18px}
   footer{text-align:center;padding:20px;color:#e8cfa0}
   a{color:#ffd27a}
-  @media(max-width:700px){main{grid-template-columns:1fr}}
+  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:stretch}
+  @media(max-width:700px){main{grid-template-columns:1fr}.two-col{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -70,7 +71,8 @@
       <input id="email" type="email" required autocomplete="email">
     </section>
 
-    <!-- Box 2 -->
+    <!-- Boxes 2 and 3 side by side, same size -->
+    <div class="two-col">
     <section class="box" aria-labelledby="h-tickets">
       <h2 id="h-tickets">Tickets</h2>
       <label>Paid Tickets <span class="req">*</span></label>
@@ -114,6 +116,7 @@
         <p class="note">$3 per pair. Colour is required only when pairs is 1 or more. With 0 pairs, no colour is needed and dandiya cost is $0.</p>
       </div>
     </section>
+    </div>
 
     <!-- Box 4 -->
     <section class="box" aria-labelledby="h-pay">
