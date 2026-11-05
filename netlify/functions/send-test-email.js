@@ -1,4 +1,4 @@
-// Netlify Function: send-test-email
+// Netlify Function: send-test-email (Gmail version)
 // TEST ONLY. No money is charged by this function. It does not
 // process cards, does not call Stripe, and does not save to a
 // Google Sheet. Sheet saving and live Stripe are future work
@@ -16,10 +16,13 @@
 //          and pairs is 1 or more; 0 pairs = $0, and no
 //          colour is required or shown for 0 pairs.
 //   3. Generates a booking reference and sends two emails
-//      through Resend, using ONLY these environment
+//      through Gmail SMTP, using ONLY these environment
 //      variables (set in Netlify, never hard-coded here):
-//        RESEND_API_KEY - the saved GARBA key (Sending access)
-//        RESEND_FROM    - test sender, onboarding@resend.dev
+//        GMAIL_USER         - vedantmusicacademy@gmail.com
+//        GMAIL_APP_PASSWORD - the Gmail App password, created
+//                             by VEDANT himself and saved in
+//                             Netlify only (never in chat)
+//      Sender: "Vedant Music Academy <vedantmusicacademy@gmail.com>"
 //      - one customer email, to the email in the form
 //      - one admin email, to vedantmusicacademy@gmail.com
 //   4. Returns success/failure without leaking secrets.
@@ -27,9 +30,12 @@
 // SECURITY: Card details must NEVER be sent to this function.
 // The browser page keeps its test-card fields local only and
 // does not include them in the POST body. If card fields are
-// sent anyway, they are ignored and never forwarded to Resend.
+// sent anyway, they are ignored and never forwarded to Gmail.
+
+const nodemailer = require("nodemailer");
 
 const ADMIN_EMAIL = "vedantmusicacademy@gmail.com";
+const FROM = "Vedant Music Academy <vedantmusicacademy@gmail.com>";
 const DIRECTIONS_URL = "https://share.google/YKFk7R0pjMEO3x2Gk";
 const EVENT_LINE = "Friday, October 15, 2027 · 7:00–11:00 PM · Bartlett Park District, 700 S Bartlett Rd, Bartlett, IL 60103";
 const COLOURS = ["Red", "Blue", "Green", "Yellow", "Orange", "Purple", "Pink", "White", "Black", "Multicolor"];
@@ -104,22 +110,22 @@ function buildEmailBody(data, ref, total, ticketCost, dandiyaCost, isAdmin) {
   return { text, html };
 }
 
-async function sendViaResend(apiKey, from, to, subject, body) {
-  const res = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ from, to: [to], subject, text: body.text, html: body.html }),
-  });
-  // Do not return Resend's error body to the browser: it can
-  // contain configuration details. Log a status only.
-  if (!res.ok) {
-    console.log("Resend send failed", res.status);
+async function sendViaGmail(transporter, to, subject, body) {
+  try {
+    await transporter.sendMail({
+      from: FROM,
+      to,
+      subject,
+      text: body.text,
+      html: body.html,
+    });
+    return true;
+  } catch {
+    // Do not return SMTP error details to the browser: they can
+    // contain configuration details. Log a generic note only.
+    console.log("Gmail send failed");
     return false;
   }
-  return true;
 }
 
 exports.handler = async (event) => {
@@ -176,20 +182,27 @@ exports.handler = async (event) => {
   const dandiyaCost = dandiya && pairs >= 1 ? pairs * 3 : 0;
   const total = ticketCost + dandiyaCost;
 
-  const apiKey = process.env.RESEND_API_KEY;
-  const from = process.env.RESEND_FROM;
-  if (!apiKey || !from) {
+  const gmailUser = process.env.GMAIL_USER;
+  const gmailAppPassword = process.env.GMAIL_APP_PASSWORD;
+  if (!gmailUser || !gmailAppPassword) {
     // Generic message only: do not say which variable is missing.
     return { statusCode: 500, headers, body: JSON.stringify({ ok: false, error: "Email service is not configured." }) };
   }
+
+  const transporter = nodemailer.createTransport({
+    host: "smtp.gmail.com",
+    port: 465,
+    secure: true,
+    auth: { user: gmailUser, pass: gmailAppPassword },
+  });
 
   const ref = "ND27-" + String(Math.floor(1000 + Math.random() * 9000));
   const data = { fullName, phone, email, paidTickets, childrenUnder8, dandiya, pairs, colour };
   const customerBody = buildEmailBody(data, ref, total, ticketCost, dandiyaCost, false);
   const adminBody = buildEmailBody(data, ref, total, ticketCost, dandiyaCost, true);
 
-  const customerSent = await sendViaResend(apiKey, from, email, `[TEST] You are registered! Navratri Dhamaka — Oct 15, 2027 (${ref})`, customerBody);
-  const adminSent = await sendViaResend(apiKey, from, ADMIN_EMAIL, `[TEST] New registration — Navratri Dhamaka (${ref})`, adminBody);
+  const customerSent = await sendViaGmail(transporter, email, `[TEST] You are registered! Navratri Dhamaka — Oct 15, 2027 (${ref})`, customerBody);
+  const adminSent = await sendViaGmail(transporter, ADMIN_EMAIL, `[TEST] New registration — Navratri Dhamaka (${ref})`, adminBody);
 
   if (!customerSent || !adminSent) {
     return {
