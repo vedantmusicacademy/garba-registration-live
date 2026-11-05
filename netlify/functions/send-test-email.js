@@ -114,7 +114,7 @@ function buildEmailBody(data, ref, total, ticketCost, dandiyaCost, isAdmin) {
     `<table width="600" cellpadding="0" cellspacing="0" style="width:100%;max-width:600px;background-color:#ffffff;border:1px solid #e8d9b8;">` +
     // 1. Dark header band.
     `<tr><td align="center" style="background-color:#2b1a0e;padding:28px 20px;">` +
-    `<div style="font-family:Georgia,serif;font-size:34px;line-height:1.2;color:#f5c542;font-weight:bold;">Radhe Krishna Sangeet and Vedant Music Academy</div>` +
+    `<div style="font-family:Georgia,serif;font-size:34px;line-height:1.2;color:#f5c542;font-weight:bold;">Radhe Krishna Sangeet &amp; Vedant Music Academy</div>` +
     `<div style="font-family:Georgia,serif;font-size:22px;line-height:1.3;color:#ffd98a;font-weight:bold;margin-top:10px;">Navratri Dhamaka</div>` +
     `<div style="font-size:14px;line-height:1.5;color:#ffd98a;margin-top:6px;">${e(heading)}</div>` +
     `</td></tr>` +
