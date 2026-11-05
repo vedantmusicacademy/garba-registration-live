@@ -154,7 +154,7 @@ function buildEmailBody(data, ref, total, ticketCost, dandiyaCost, isAdmin, paym
     `<table width="600" cellpadding="0" cellspacing="0" style="width:100%;max-width:600px;background-color:#ffffff;border:1px solid #e8d9b8;">` +
     // 1. Dark header band.
     `<tr><td align="center" style="background-color:#2b1a0e;padding:28px 20px;">` +
-    `<div style="font-family:Georgia,serif;font-size:34px;line-height:1.2;color:#f5c542;font-weight:bold;">Radhe Krishna Sangeet &amp; Vedant Music Academy</div>` +
+    `<div style="font-family:Georgia,serif;font-size:34px;line-height:1.2;color:#f5c542;font-weight:bold;">Radhe Krishna Sangeet &amp;<br>Vedant Music Academy</div>` +
     `<div style="font-family:Georgia,serif;font-size:22px;line-height:1.3;color:#ffd98a;font-weight:bold;margin-top:10px;">Navratri Dhamaka</div>` +
     `<div style="font-size:14px;line-height:1.5;color:#ffd98a;margin-top:6px;">${e(heading)}</div>` +
     `</td></tr>` +
@@ -302,17 +302,20 @@ async function appendSheetRow(data, total, ticketCost, dandiyaCost, paymentMetho
   const next = dataRows + 1;
   const ref = "VMA27-" + String(next).padStart(4, "0");
   const hasDandiya = data.dandiya && data.pairs >= 1;
-  // Row order (16 columns): the existing 15 columns unchanged,
-  // then Payment Method appended at the end so existing Sheet
-  // data is not shifted: Registration Code, Date, Full Name,
-  // Phone, Email, Adult Tickets, Children (count), Dandiya
-  // Required, Dandiya Color, Amount Paid (total), Payment
-  // Status, Transaction ID, QR Code URL (empty), Ticket Amount,
-  // Dandiya Amount, Payment Method. Ticket Amount and Dandiya
-  // Amount are the two parts of the total, so they always sum
-  // to it. Payment Status is TEST for card and apple_pay,
-  // TEST_PENDING_ZELLE for Zelle, and TEST_PENDING_VENMO
-  // for Venmo.
+  // Row order (17 columns): the existing 16 columns unchanged,
+  // then Paid appended at the end so existing Sheet data is not
+  // shifted: Registration Code, Date, Full Name, Phone, Email,
+  // Adult Tickets, Children (count), Dandiya Required, Dandiya
+  // Color, Amount Paid (total), Payment Status, Transaction ID,
+  // QR Code URL (empty), Ticket Amount, Dandiya Amount, Payment
+  // Method, Paid. Ticket Amount and Dandiya Amount are the two
+  // parts of the total, so they always sum to it. Payment Status
+  // is TEST for card and apple_pay, TEST_PENDING_ZELLE for Zelle,
+  // and TEST_PENDING_VENMO for Venmo. Paid is "Yes" automatically
+  // for card and apple_pay, because those payments are instant
+  // (in live mode Stripe confirms them at once); for Zelle and
+  // Venmo it is left blank, so the owner writes Yes manually
+  // only after checking the payment himself.
   const row = [
     ref,
     chicagoDate(),
@@ -330,10 +333,11 @@ async function appendSheetRow(data, total, ticketCost, dandiyaCost, paymentMetho
     ticketCost,
     dandiyaCost,
     paymentMethod,
+    paymentMethod === "card" || paymentMethod === "apple_pay" ? "Yes" : "",
   ];
   await sheets.spreadsheets.values.append({
     spreadsheetId,
-    range: "Sheet1!A:P",
+    range: "Sheet1!A:Q",
     valueInputOption: "USER_ENTERED",
     requestBody: { values: [row] },
   });

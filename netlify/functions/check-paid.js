@@ -112,17 +112,28 @@ function buildConfirmedEmail(row, code, method) {
     `<tr><td align="center" style="padding:16px;">` +
     `<table width="600" cellpadding="0" cellspacing="0" style="width:100%;max-width:600px;background-color:#ffffff;border:1px solid #e8d9b8;">` +
     `<tr><td align="center" style="background-color:#2b1a0e;padding:28px 20px;">` +
-    `<div style="font-family:Georgia,serif;font-size:34px;line-height:1.2;color:#f5c542;font-weight:bold;">Radhe Krishna Sangeet &amp; Vedant Music Academy</div>` +
+    `<div style="font-family:Georgia,serif;font-size:34px;line-height:1.2;color:#f5c542;font-weight:bold;">Radhe Krishna Sangeet &amp;<br>Vedant Music Academy</div>` +
     `<div style="font-family:Georgia,serif;font-size:22px;line-height:1.3;color:#ffd98a;font-weight:bold;margin-top:10px;">Navratri Dhamaka</div>` +
     `<div style="font-size:14px;line-height:1.5;color:#ffd98a;margin-top:6px;">${e(heading)}</div>` +
     `</td></tr>` +
     `<tr><td style="padding:24px;">` +
     `<p style="font-size:15px;line-height:1.6;margin:0 0 16px 0;">${e(intro)}</p>` +
-    `<table width="100%" cellpadding="0" cellspacing="0" style="background-color:#fff3d6;border:2px solid #f5c542;">` +
+    `<table width="100%" cellpadding="0" cellspacing="0" style="background-color:#dcfce7;border:2px solid #16a34a;">` +
+    `<tr><td align="center" style="padding:16px;">` +
+    `<div style="font-size:18px;line-height:1.4;color:#166534;font-weight:bold;">✓ YOUR TICKET IS CONFIRMED</div>` +
+    `<div style="font-size:13px;color:#166534;margin-top:4px;">Payment received — see you at the Garba!</div>` +
+    `</td></tr></table>` +
+    `<table width="100%" cellpadding="0" cellspacing="0" style="background-color:#fff3d6;border:2px solid #f5c542;margin-top:16px;">` +
     `<tr><td align="center" style="padding:20px;">` +
     `<div style="font-size:13px;letter-spacing:2px;color:#7a4a00;font-weight:bold;">BOOKING REFERENCE</div>` +
     `<div style="font-family:Georgia,serif;font-size:42px;line-height:1.2;color:#2b1a0e;font-weight:bold;margin-top:6px;">${e(code)}</div>` +
     `<div style="font-size:13px;color:#5a3d1a;margin-top:6px;">Your ticket is confirmed. Please keep this code for entry.</div>` +
+    `</td></tr></table>` +
+    `<table width="100%" cellpadding="0" cellspacing="0" style="background-color:#ffedd6;border:1px solid #e67e22;margin-top:16px;">` +
+    `<tr><td align="center" style="padding:20px;">` +
+    `<div style="font-size:13px;letter-spacing:2px;color:#7a3c00;font-weight:bold;">AMOUNT PAID (TEST)</div>` +
+    `<div style="font-family:Georgia,serif;font-size:36px;line-height:1.2;color:#2b1a0e;font-weight:bold;margin-top:6px;">${e(money(row.total))}</div>` +
+    `<div style="font-size:13px;color:#5a3d1a;margin-top:6px;">Paid by ${e(paymentMethodLabel(method))}</div>` +
     `</td></tr></table>` +
     `<table width="100%" cellpadding="0" cellspacing="0" style="background-color:#fdf6ec;border:1px solid #e8d9b8;margin-top:16px;">` +
     `<tr><td style="padding:20px;">` +
@@ -297,9 +308,51 @@ async function runCheck() {
       `Children under 10 (free): ${row.children}\n\n` +
       `The customer has been sent the [TEST] ticket-confirmed email.\n` +
       `TEST registration — No money was charged by this page.\n`;
+    const adminHtml =
+      `<table width="100%" cellpadding="0" cellspacing="0" style="background-color:#fff8ee;font-family:Arial,Helvetica,sans-serif;color:#2b1a0e;">` +
+      `<tr><td align="center" style="padding:16px;">` +
+      `<table width="600" cellpadding="0" cellspacing="0" style="width:100%;max-width:600px;background-color:#ffffff;border:1px solid #e8d9b8;">` +
+      `<tr><td align="center" style="background-color:#2b1a0e;padding:28px 20px;">` +
+      `<div style="font-family:Georgia,serif;font-size:34px;line-height:1.2;color:#f5c542;font-weight:bold;">Radhe Krishna Sangeet &amp;<br>Vedant Music Academy</div>` +
+      `<div style="font-family:Georgia,serif;font-size:22px;line-height:1.3;color:#ffd98a;font-weight:bold;margin-top:10px;">Navratri Dhamaka</div>` +
+      `<div style="font-size:14px;line-height:1.5;color:#ffd98a;margin-top:6px;">Manual payment confirmed</div>` +
+      `</td></tr>` +
+      `<tr><td style="padding:24px;">` +
+      `<table width="100%" cellpadding="0" cellspacing="0" style="background-color:#dcfce7;border:2px solid #16a34a;">` +
+      `<tr><td align="center" style="padding:16px;">` +
+      `<div style="font-size:18px;line-height:1.4;color:#166534;font-weight:bold;">✓ MANUAL PAYMENT CONFIRMED</div>` +
+      `<div style="font-size:13px;color:#166534;margin-top:4px;">Paid = Yes in the Sheet — customer email sent, status is now TEST_CONFIRMED.</div>` +
+      `</td></tr></table>` +
+      `<table width="100%" cellpadding="0" cellspacing="0" style="background-color:#fff3d6;border:2px solid #f5c542;margin-top:16px;">` +
+      `<tr><td align="center" style="padding:20px;">` +
+      `<div style="font-size:13px;letter-spacing:2px;color:#7a4a00;font-weight:bold;">BOOKING REFERENCE</div>` +
+      `<div style="font-family:Georgia,serif;font-size:42px;line-height:1.2;color:#2b1a0e;font-weight:bold;margin-top:6px;">${escapeHtml(code)}</div>` +
+      `</td></tr></table>` +
+      `<table width="100%" cellpadding="0" cellspacing="0" style="background-color:#ffedd6;border:1px solid #e67e22;margin-top:16px;">` +
+      `<tr><td align="center" style="padding:20px;">` +
+      `<div style="font-size:13px;letter-spacing:2px;color:#7a3c00;font-weight:bold;">AMOUNT PAID (TEST)</div>` +
+      `<div style="font-family:Georgia,serif;font-size:36px;line-height:1.2;color:#2b1a0e;font-weight:bold;margin-top:6px;">${escapeHtml(money(row.total))}</div>` +
+      `<div style="font-size:13px;color:#5a3d1a;margin-top:6px;">Paid by ${escapeHtml(paymentMethodLabel(method))}</div>` +
+      `</td></tr></table>` +
+      `<div style="font-size:16px;font-weight:bold;color:#2b1a0e;margin-top:24px;margin-bottom:10px;">Booking details</div>` +
+      `<table width="100%" cellpadding="8" cellspacing="0" style="font-size:14px;line-height:1.6;border-collapse:collapse;">` +
+      `<tr><td style="border-bottom:1px solid #eee0c8;color:#7a4a00;width:180px;">Full name</td><td style="border-bottom:1px solid #eee0c8;">${escapeHtml(row.name)}</td></tr>` +
+      `<tr><td style="border-bottom:1px solid #eee0c8;color:#7a4a00;">Email</td><td style="border-bottom:1px solid #eee0c8;">${escapeHtml(email)}</td></tr>` +
+      `<tr><td style="border-bottom:1px solid #eee0c8;color:#7a4a00;">Paid tickets</td><td style="border-bottom:1px solid #eee0c8;">${escapeHtml(row.tickets)}</td></tr>` +
+      `<tr><td style="border-bottom:1px solid #eee0c8;color:#7a4a00;">Children under 10 (free)</td><td style="border-bottom:1px solid #eee0c8;">${escapeHtml(row.children)}</td></tr>` +
+      `<tr><td style="border-bottom:1px solid #eee0c8;color:#7a4a00;">Dandiya</td><td style="border-bottom:1px solid #eee0c8;">${escapeHtml(row.dandiyaPairs)} pair${row.dandiyaPairs === 1 ? "" : "s"}${row.colour ? ` · ${row.colour}` : ""}</td></tr>` +
+      `<tr><td style="color:#7a4a00;">Payment method</td><td>${escapeHtml(paymentMethodLabel(method))}</td></tr>` +
+      `</table>` +
+      `<table width="100%" cellpadding="0" cellspacing="0" style="background-color:#2b1a0e;margin-top:24px;">` +
+      `<tr><td align="center" style="padding:18px;color:#ffffff;font-size:13px;line-height:1.6;">` +
+      `Presented by Radhe Krishna Sangeet and Vedant Music Academy<br>` +
+      `TEST registration — No money was charged.` +
+      `</td></tr></table>` +
+      `</td></tr></table>` +
+      `</td></tr></table>`;
     const adminSent = await sendMail(transporter, ADMIN_EMAIL, adminSubject, {
       text: adminText,
-      html: `<pre style="font-family:Arial,Helvetica,sans-serif;font-size:14px;">${escapeHtml(adminText)}</pre>`,
+      html: adminHtml,
     });
 
     // Emails first, status flip second: if either email fails, the
