@@ -1,8 +1,9 @@
-// Netlify Function: send-test-email (Gmail version)
+// Netlify Function: send-test-email (Gmail + Google Sheet version)
 // TEST ONLY. No money is charged by this function. It does not
-// process cards, does not call Stripe, and does not save to a
-// Google Sheet. Sheet saving and live Stripe are future work
-// and are NOT implemented here.
+// process cards and does not call Stripe. It DOES save each test
+// registration to a Google Sheet with a sequential VMA27 code
+// (VMA27-0001, VMA27-0002, ...). Live Stripe is future work
+// and is NOT implemented here.
 //
 // What it does, on a POST from the test registration form:
 //   1. Validates name, phone, email, paid tickets, children
@@ -15,7 +16,15 @@
 //        - dandiya: $3 per pair, only when dandiya is Yes
 //          and pairs is 1 or more; 0 pairs = $0, and no
 //          colour is required or shown for 0 pairs.
-//   3. Generates a booking reference and sends two emails
+//   3. Saves the registration to a Google Sheet FIRST, using
+//      ONLY these environment variables (set in Netlify, never
+//      hard-coded here, and never logged):
+//        GOOGLE_SERVICE_ACCOUNT_JSON - service-account JSON
+//        GOOGLE_SPREADSHEET_ID       - the new Sheet's ID
+//      The next code is (existing data rows + 1), formatted as
+//      VMA27-#### (first registration = VMA27-0001). If the
+//      Sheet append fails, no email is sent.
+//   4. Generates the VMA27 booking reference and sends two emails
 //      through Gmail SMTP, using ONLY these environment
 //      variables (set in Netlify, never hard-coded here):
 //        GMAIL_USER         - vedantmusicacademy@gmail.com
@@ -33,6 +42,7 @@
 // sent anyway, they are ignored and never forwarded to Gmail.
 
 const nodemailer = require("nodemailer");
+const { google } = require("googleapis");
 
 const ADMIN_EMAIL = "vedantmusicacademy@gmail.com";
 const FROM = "Vedant Music Academy <vedantmusicacademy@gmail.com>";
@@ -182,6 +192,84 @@ async function sendViaGmail(transporter, to, subject, body) {
   }
 }
 
+// Chicago date as YYYY-MM-DD, from the registration moment.
+function chicagoDate() {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Chicago",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(new Date());
+  const get = (type) => parts.find((part) => part.type === type).value;
+  return `${get("year")}-${get("month")}-${get("day")}`;
+}
+
+// Append one registration row and return its sequential code.
+// Throws on any Sheet error, so the caller sends no email then.
+// Race limitation: the next number is (existing data rows + 1).
+// Two truly simultaneous registrations could read the same count
+// and collide, and an email failure after a successful append
+// leaves a gap in the sequence. For the expected low volume
+// this is acceptable.
+async function appendSheetRow(data, total, ticketCost, dandiyaCost) {
+  let creds;
+  try {
+    creds = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_JSON || "");
+  } catch {
+    throw new Error("Sheet credentials are not configured.");
+  }
+  const spreadsheetId = process.env.GOOGLE_SPREADSHEET_ID;
+  if (!creds.client_email || !creds.private_key || !spreadsheetId) {
+    throw new Error("Sheet service is not configured.");
+  }
+  const auth = new google.auth.JWT(
+    creds.client_email,
+    null,
+    creds.private_key,
+    ["https://www.googleapis.com/auth/spreadsheets"]
+  );
+  const sheets = google.sheets({ version: "v4", auth });
+  const read = await sheets.spreadsheets.values.get({
+    spreadsheetId,
+    range: "Sheet1!A:A",
+  });
+  const values = read.data.values || [];
+  let dataRows = 0;
+  for (const row of values) {
+    if (row && row[0]) dataRows += 1;
+  }
+  // Exclude the header row, if present.
+  if (values.length > 0 && values[0] && values[0][0] === "Registration Code") {
+    dataRows -= 1;
+  }
+  if (dataRows < 0) dataRows = 0;
+  const next = dataRows + 1;
+  const ref = "VMA27-" + String(next).padStart(4, "0");
+  const hasDandiya = data.dandiya && data.pairs >= 1;
+  const row = [
+    ref,
+    chicagoDate(),
+    data.fullName,
+    data.phone,
+    data.email,
+    data.paidTickets,
+    data.childrenUnder8,
+    data.dandiya ? "Yes" : "No",
+    hasDandiya ? data.colour : "",
+    total,
+    "TEST",
+    "TEST",
+    "",
+  ];
+  await sheets.spreadsheets.values.append({
+    spreadsheetId,
+    range: "Sheet1!A:M",
+    valueInputOption: "USER_ENTERED",
+    requestBody: { values: [row] },
+  });
+  return ref;
+}
+
 exports.handler = async (event) => {
   const headers = { "Content-Type": "application/json" };
   if (event.httpMethod !== "POST") {
@@ -243,15 +331,34 @@ exports.handler = async (event) => {
     return { statusCode: 500, headers, body: JSON.stringify({ ok: false, error: "Email service is not configured." }) };
   }
 
+  const data = { fullName, phone, email, paidTickets, childrenUnder8, dandiya, pairs, colour };
+
+  // Sheet FIRST, with the sequential VMA27 code. If this fails,
+  // no email is sent, so no registration is confirmed without
+  // a Sheet row.
+  let ref;
+  try {
+    ref = await appendSheetRow(data, total, ticketCost, dandiyaCost);
+  } catch {
+    // Generic message only: do not leak Sheet/API error details.
+    return {
+      statusCode: 502,
+      headers,
+      body: JSON.stringify({
+        ok: false,
+        customerEmailSent: false,
+        adminEmailSent: false,
+        error: "Test registration could not be saved. Check the Netlify Sheet settings and try again.",
+      }),
+    };
+  }
+
   const transporter = nodemailer.createTransport({
     host: "smtp.gmail.com",
     port: 465,
     secure: true,
     auth: { user: gmailUser, pass: gmailAppPassword },
   });
-
-  const ref = "ND27-" + String(Math.floor(1000 + Math.random() * 9000));
-  const data = { fullName, phone, email, paidTickets, childrenUnder8, dandiya, pairs, colour };
   const customerBody = buildEmailBody(data, ref, total, ticketCost, dandiyaCost, false);
   const adminBody = buildEmailBody(data, ref, total, ticketCost, dandiyaCost, true);
 
@@ -268,7 +375,7 @@ exports.handler = async (event) => {
         total,
         customerEmailSent: customerSent,
         adminEmailSent: adminSent,
-        error: "Test email could not be sent. Check the Netlify email settings and try again.",
+        error: "Test email could not be sent, but the registration was saved to the Sheet. Check the Netlify email settings and try again. Note: a re-registration will use the next code in the sequence.",
       }),
     };
   }
