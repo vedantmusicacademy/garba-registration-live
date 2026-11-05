@@ -84,7 +84,7 @@ function buildEmailBody(data, ref, total, ticketCost, dandiyaCost, isAdmin) {
     `${heading}\n` +
     `${intro}\n\n` +
     `Booking reference: ${ref}\n` +
-    `Total (test): ${money(total)}\n` +
+    `Amount paid (test): ${money(total)}\n` +
     `Paid tickets: ${data.paidTickets} × ${data.paidTickets >= 10 ? "$8.00" : "$10.00"} = ${money(ticketCost)}\n` +
     `Dandiya cost: ${money(dandiyaCost)}\n\n` +
     `Event: Navratri Dhamaka\n` +
@@ -130,7 +130,7 @@ function buildEmailBody(data, ref, total, ticketCost, dandiyaCost, isAdmin) {
     // 3. Separate total box with breakdown.
     `<table width="100%" cellpadding="0" cellspacing="0" style="background-color:#ffedd6;border:1px solid #e67e22;margin-top:16px;">` +
     `<tr><td style="padding:20px;">` +
-    `<div style="font-size:13px;letter-spacing:2px;color:#7a3c00;font-weight:bold;">TOTAL (TEST)</div>` +
+    `<div style="font-size:13px;letter-spacing:2px;color:#7a3c00;font-weight:bold;">AMOUNT PAID (TEST)</div>` +
     `<div style="font-family:Georgia,serif;font-size:36px;line-height:1.2;color:#2b1a0e;font-weight:bold;margin-top:6px;">${e(money(total))}</div>` +
     `<div style="font-size:14px;line-height:1.7;color:#2b1a0e;margin-top:10px;">` +
     `Paid tickets: ${data.paidTickets} × ${data.paidTickets >= 10 ? "$8.00" : "$10.00"} = ${e(money(ticketCost))}<br>` +
